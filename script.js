@@ -203,8 +203,13 @@ class LightningNetworkCanvas {
         this.frameAvg = 16;        // ms
 
         // Offscreen base layer for static channels/nodes
+        this.edgeIndex = new Map(); // key "a-b" -> edge idx（无向）
         this.base = document.createElement('canvas');
         this.bctx = this.base.getContext('2d');
+        // 统计显示缓动
+        this.displayStats = { nodes: 0, channels: 0, tps: 0 };
+        // 初始化脉冲数组
+        this.pulses = [];
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -279,74 +284,69 @@ class LightningNetworkCanvas {
         return this.nodes.length - 1;
     }
 
-    // 生成更接近 Lightning Explorer 的密集拓扑
+    // 生成更接近 Lightning Explorer 的密集拓扑（减少总节点数）
     generateGraph() {
         this.nodes = [];
         this.edges = [];
 
         const area = this.width * this.height;
-        const targetNodes = Math.round(Math.min(1300, Math.max(500, area / 450))); // 700x550 -> ~850-900
+        const targetNodes = Math.round(Math.min(1100, Math.max(420, area / 650))); // 降低整体密度
 
         // 预设几个大型 hub 聚类锚点（左右两侧各有明显聚簇）
         const hubs = [
             { x: this.width * 0.18, y: this.height * (0.45 + (this.rand() - 0.5) * 0.2), r: 10 },
             { x: this.width * 0.35, y: this.height * (0.50 + (this.rand() - 0.5) * 0.2), r: 12 },
             { x: this.width * 0.55, y: this.height * (0.50 + (this.rand() - 0.5) * 0.2), r: 12 },
-            { x: this.width * 0.80, y: this.height * (0.48 + (this.rand() - 0.5) * 0.15), r: 14 }, // 右侧大簇
-            { x: this.width * 0.08, y: this.height * (0.25 + (this.rand() - 0.5) * 0.1), r: 9 },  // 左上支链
+            { x: this.width * 0.80, y: this.height * (0.48 + (this.rand() - 0.5) * 0.15), r: 14 },
+            { x: this.width * 0.08, y: this.height * (0.25 + (this.rand() - 0.5) * 0.1), r: 9 },
         ];
 
-        // hub 本体
         const hubIdx = hubs.map(h => this.addNode(h.x, h.y, h.r, 'hub'));
 
-        // 每个 hub 附近生成子簇
-        const clusterPerHub = 4;
-        const microPerHub = 40;
-        const secondPerHub = 24;
+        // 密度调低
+        const clusterPerHub = 3;
+        const microPerHub = 30;
+        const secondPerHub = 18;
 
-        hubs.forEach((h, hi) => {
-            // 次级节点环
+        hubs.forEach((h) => {
             for (let i = 0; i < secondPerHub; i++) {
                 const ang = (i / secondPerHub) * Math.PI * 2 + this.rand() * 0.6;
-                const dist = 35 + this.rand() * 70;
+                const dist = 35 + this.rand() * 60;
                 const x = h.x + Math.cos(ang) * dist;
                 const y = h.y + Math.sin(ang) * dist;
-                this.addNode(x, y, 3 + this.rand() * 2.5, 'secondary');
+                this.addNode(x, y, 3 + this.rand() * 2.2, 'secondary');
             }
-            // 微节点环
             for (let i = 0; i < microPerHub; i++) {
                 const ang = this.rand() * Math.PI * 2;
-                const dist = 80 + this.rand() * 120;
+                const dist = 70 + this.rand() * 110;
                 const x = h.x + Math.cos(ang) * dist;
                 const y = h.y + Math.sin(ang) * dist;
-                this.addNode(x, y, 1 + this.rand() * 1.5, 'micro');
+                this.addNode(x, y, 1 + this.rand() * 1.4, 'micro');
             }
-            // 小型团簇
             for (let c = 0; c < clusterPerHub; c++) {
                 const ang = this.rand() * Math.PI * 2;
-                const base = 120 + this.rand() * 160;
+                const base = 110 + this.rand() * 150;
                 const cx = h.x + Math.cos(ang) * base;
                 const cy = h.y + Math.sin(ang) * base;
-                const size = 10 + Math.floor(this.rand() * 20);
+                const size = 8 + Math.floor(this.rand() * 16);
                 for (let i = 0; i < size; i++) {
                     const a2 = this.rand() * Math.PI * 2;
-                    const d2 = 10 + this.rand() * 40;
+                    const d2 = 10 + this.rand() * 36;
                     const x = cx + Math.cos(a2) * d2;
                     const y = cy + Math.sin(a2) * d2;
-                    this.addNode(x, y, 1 + this.rand() * 1.2, 'micro');
+                    this.addNode(x, y, 1 + this.rand() * 1.1, 'micro');
                 }
             }
         });
 
-        // 中央密集带（参考图中央亮区）
-        const bandNodes = Math.max(200, Math.round(targetNodes - this.nodes.length));
+        // 中央密集带（适度减少）
+        const bandNodes = Math.max(120, Math.round(targetNodes - this.nodes.length));
         for (let i = 0; i < bandNodes; i++) {
-            const x = this.width * (0.15 + this.rand() * 0.70);
-            const y = this.height * (0.30 + this.rand() * 0.40) + (this.rand() - 0.5) * 12;
-            this.addNode(x, y, 1 + this.rand() * 1.4, 'micro');
+            const x = this.width * (0.16 + this.rand() * 0.68);
+            const y = this.height * (0.32 + this.rand() * 0.36) + (this.rand() - 0.5) * 10;
+            this.addNode(x, y, 1 + this.rand() * 1.3, 'micro');
         }
 
-        // 建边：按近邻连接（限制半径，控制度数）
         this.buildEdges();
     }
 
@@ -563,28 +563,86 @@ class LightningNetworkCanvas {
         ctx.restore();
     }
 
+    // 将新增边绘制到静态层（与 preRenderStatic 中样式一致）
+    drawEdgeToBase(e) {
+        const ctx = this.bctx;
+        const a = this.nodes[e.a], b = this.nodes[e.b];
+        if (!a || !b) return;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.lineWidth = 0.6 + e.w * 1.4;
+        ctx.strokeStyle = `rgba(120, 230, 255, ${0.05 + e.w * 0.18})`;
+        ctx.shadowColor = 'rgba(120,230,255,0.3)';
+        ctx.shadowBlur = 6;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // 随机动态增加一条边（通道），并触发热点与统计更新
+    addRandomEdge() {
+        if (this.nodes.length < 2) return;
+        const a = Math.floor(this.rand() * this.nodes.length);
+        let best = -1, bestD = Infinity;
+        const pa = this.nodes[a];
+        const radius = pa.type === 'hub' ? 220 : pa.type === 'secondary' ? 140 : 90;
+        for (let b = 0; b < this.nodes.length; b++) {
+            if (b === a) continue;
+            // 已经相邻则跳过
+            if (pa.neighbors && pa.neighbors.includes(b)) continue;
+            const d2 = this.dist2(pa, this.nodes[b]);
+            if (d2 < bestD && Math.sqrt(d2) < radius) { bestD = d2; best = b; }
+        }
+        if (best === -1) return;
+        const d = Math.sqrt(bestD);
+        const w = Math.max(0.05, 1 - d / (radius + 1));
+        const e = { a, b: best, w, heat: 0.9 };
+        this.edges.push(e);
+        this.nodes[a].neighbors.push(best);
+        this.nodes[best].neighbors.push(a);
+        const key = a < best ? `${a}-${best}` : `${best}-${a}`;
+        this.edgeIndex.set(key, this.edges.length - 1);
+        // 绘制到静态层
+        this.drawEdgeToBase(e);
+        // 触发热点辉光
+        this.hotEdges.add(this.edges.length - 1);
+        // 轻微节点脉冲
+        const hue = 40 + Math.floor(this.rand() * 50);
+        this.pulses.push({ x: pa.x, y: pa.y, r: pa.r + 3, maxR: pa.r + 26, alpha: 0.7, hue });
+        const pb = this.nodes[best];
+        this.pulses.push({ x: pb.x, y: pb.y, r: pb.r + 3, maxR: pb.r + 26, alpha: 0.7, hue });
+        // 更新统计立即可见
+        this.updateStats(true);
+    }
+
+    // 随机选择一个节点（可带过滤条件），无候选时返回 -1
+    pickNode(predicate) {
+        const candidates = [];
+        for (let i = 0; i < this.nodes.length; i++) {
+            const n = this.nodes[i];
+            if (!n) continue;
+            if (!predicate || predicate(n)) candidates.push(i);
+        }
+        if (candidates.length === 0) return -1;
+        return candidates[Math.floor(this.rand() * candidates.length)];
+    }
+
     spawnRoutes(count = 6) {
         for (let i = 0; i < count; i++) {
             const start = this.pickNode(x => x.x < this.width * (0.35 + this.rand() * 0.2));
             const end = this.pickNode(x => x.x > this.width * (0.55 - this.rand() * 0.2));
             if (start === -1 || end === -1) continue;
-            const path = this.findPath(start, end, 4 + Math.floor(this.rand() * 5));
+            const path = this.findPath(start, end, 8 + Math.floor(this.rand() * 3), 3 + Math.floor(this.rand() * 2));
             if (path.length < 2) continue;
-            this.routes.push({ path, seg: 0, t: this.rand(), speed: 0.006 + this.rand() * 0.01, hue: 30 + Math.floor(this.rand() * 60) });
+            this.routes.push({ path, seg: 0, t: this.rand(), speed: 0.012 + this.rand() * 0.012, hue: 30 + Math.floor(this.rand() * 60) });
         }
     }
 
-    pickNode(predicate) {
-        const candidates = [];
-        for (let i = 0; i < this.nodes.length; i++) {
-            if (!predicate || predicate(this.nodes[i])) candidates.push(i);
-        }
-        if (!candidates.length) return -1;
-        return candidates[Math.floor(this.rand() * candidates.length)];
-    }
-
-    findPath(aIdx, bIdx, maxHops = 6) {
-        // 贪心地朝目标前进，构造 3-8 hop 的路径（仅使用相邻节点，不强行连接终点）
+    // 贪心多跳路径，限制为相邻节点，支持最小跳数
+    findPath(aIdx, bIdx, maxHops = 6, minHops = 2) {
         const path = [aIdx];
         let current = aIdx;
         const visited = new Set([aIdx]);
@@ -602,7 +660,7 @@ class LightningNetworkCanvas {
             path.push(next);
             visited.add(next);
             current = next;
-            if (current === bIdx) break; // 找到终点就停止
+            if (current === bIdx && path.length >= minHops + 1) break;
         }
         return path.length >= 2 ? path : [];
     }
@@ -750,6 +808,8 @@ class LightningNetworkCanvas {
         this.drawPulses();
         this.drawHover();
 
+        // 动态新增通道（少量、随机）
+        if (Math.random() > 0.996) this.addRandomEdge();
         // 控制并发路由并偶尔补充
         if (this.routes.length > this.maxRoutes) this.routes.length = this.maxRoutes;
         if (this.routes.length < this.maxRoutes && Math.random() > 0.988) this.spawnRoutes(1);
@@ -757,17 +817,28 @@ class LightningNetworkCanvas {
         requestAnimationFrame(this.animate);
     }
 
-    updateStats() {
+    updateStats(force = false) {
         const nodeEl = document.getElementById('node-count');
         const chEl = document.getElementById('channel-count');
         const tpsEl = document.getElementById('tps-count');
         if (!nodeEl || !chEl || !tpsEl) return;
-        const nodes = this.nodes.length;
-        const channels = this.edges.length;
-        const tps = Math.round(this.routes.length * (120 + Math.random() * 80));
-        nodeEl.textContent = nodes.toLocaleString();
-        chEl.textContent = channels.toLocaleString();
-        tpsEl.textContent = tps.toLocaleString();
+        const targetNodes = this.nodes.length;
+        const targetChannels = this.edges.length;
+        const targetTps = Math.round((this.routes.length * (180 + Math.random() * 160)) * (0.8 + Math.random() * 0.4));
+        // 初始化
+        if (this.displayStats.nodes === 0 && this.displayStats.channels === 0 && !force) {
+            this.displayStats.nodes = targetNodes;
+            this.displayStats.channels = targetChannels;
+            this.displayStats.tps = targetTps;
+        }
+        // 缓动到目标
+        const ease = (cur, tgt, k = 0.3) => cur + Math.sign(tgt - cur) * Math.max(1, Math.floor(Math.abs(tgt - cur) * k));
+        this.displayStats.nodes = ease(this.displayStats.nodes, targetNodes, 0.25);
+        this.displayStats.channels = ease(this.displayStats.channels, targetChannels, 0.25);
+        this.displayStats.tps = ease(this.displayStats.tps, targetTps, 0.35);
+        nodeEl.textContent = this.displayStats.nodes.toLocaleString();
+        chEl.textContent = this.displayStats.channels.toLocaleString();
+        tpsEl.textContent = this.displayStats.tps.toLocaleString();
     }
 
     alpha(hex, a) {
