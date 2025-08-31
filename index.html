@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiber Network - Satoshi's P2P Ecash Vision</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="icons/fiber-logo.svg" alt="Fiber Network" class="logo">
+            </div>
+            <div class="nav-links">
+                <a href="#how-it-works">How it Works</a>
+                <a href="#features">Features</a>
+                <a href="#comparison">Comparison</a>
+                <a href="#community">Community</a>
+                <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="lightpaper-btn">Lightpaper</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Fiber Network is Scaling</h1>
+            <div class="hero-subtitle">
+                <h2>Satoshi's P2P Ecash Vision</h2>
+                <p>A scalable, privacy-by-default payment & swap network</p>
+            </div>
+            <div class="hero-cta">
+                <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="btn-primary">Read Lightpaper</a>
+                <a href="#how-it-works" class="btn-secondary">Learn More</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="network-animation">
+                <!-- Network Stats -->
+                <div class="network-stats">
+                    <div class="stat">
+                        <span>Nodes:</span>
+                        <span class="stat-value" id="node-count">1,233</span>
+                    </div>
+                    <div class="stat">
+                        <span>Channels:</span>
+                        <span class="stat-value" id="channel-count">4,238</span>
+                    </div>
+                    <div class="stat">
+                        <span>TPS:</span>
+                        <span class="stat-value" id="tps-count">23,847</span>
+                    </div>
+                </div>
+
+                <!-- Dense Network Visualization -->
+                <canvas id="networkCanvas" width="700" height="550"></canvas>
+
+                <!-- Overlay Elements -->
+                <div class="network-overlay">
+                    <!-- Major Hub Indicators -->
+                    <div class="hub-indicator" style="top: 275px; left: 350px;"></div>
+                    <div class="hub-indicator" style="top: 200px; left: 200px;"></div>
+                    <div class="hub-indicator" style="top: 320px; left: 500px;"></div>
+                    <div class="hub-indicator" style="top: 150px; left: 450px;"></div>
+                    <div class="hub-indicator" style="top: 380px; left: 150px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2>How Does Fiber Network Work?</h2>
+            <div class="steps-container">
+                <div class="step active" data-step="1">
+                    <div class="step-content">
+                        <h3>1 of 4 Off-Chain Payment Channels</h3>
+                        <img src="imgs/step1.png" alt="Off-Chain Payment Channels" class="step-image">
+                        <p>An off-chain payment channel allows two parties to lock funds on-chain, conduct unlimited instant transactions off-chain, and settle the final balance on-chain when the channel is closed.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-content">
+                        <h3>2 of 4 Multi-Hop Routing</h3>
+                        <img src="imgs/step2.png" alt="Multi-Hop Routing" class="step-image">
+                        <p>Multi-hop routing enables payments between parties who don't have direct channels by routing through intermediate nodes in the network.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-content">
+                        <h3>3 of 4 Cross-Chain Interoperability</h3>
+                        <img src="imgs/step3.png" alt="Cross-Chain Interoperability" class="step-image">
+                        <p>Fiber Network enables seamless interoperability with Bitcoin Lightning Network for cross-chain payments and asset transfers.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-content">
+                        <h3>4 of 4 Multi-Asset Support</h3>
+                        <img src="imgs/step4.png" alt="Multi-Asset Support" class="step-image">
+                        <p>Support for various digital assets including CKB and RGB++ tokens, providing users with diverse payment options.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-controls">
+                <button class="prev-btn" onclick="previousStep()">
+                    <img src="icons/left.svg" alt="Previous">
+                </button>
+                <div class="step-indicators">
+                    <span class="indicator active" data-step="1"></span>
+                    <span class="indicator" data-step="2"></span>
+                    <span class="indicator" data-step="3"></span>
+                    <span class="indicator" data-step="4"></span>
+                </div>
+                <button class="next-btn" onclick="nextStep()">
+                    <img src="icons/right.svg" alt="Next">
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Highlighted Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="icons/scalability.svg" alt="Scalability">
+                    </div>
+                    <h3>Scalability</h3>
+                    <p>Through off-chain payment channels and multi-hop routing, Fiber Network can achieve high-throughput transaction processing, meeting the needs of large-scale users.</p>
+                    <div class="feature-highlights">
+                        <span class="highlight">Faster ✦</span>
+                        <span class="highlight">Cheaper ✦</span>
+                        <span class="highlight">P2P ✦</span>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="icons/low-cost.svg" alt="Low Cost">
+                    </div>
+                    <h3>Low Cost</h3>
+                    <p>By reducing the frequency of on-chain transactions, Fiber Network lowers transaction fees, making micropayments feasible and efficient.</p>
+                    <div class="feature-highlights">
+                        <span class="highlight">Multi-Asset Support ✦</span>
+                        <span class="highlight">Interoperability ✦</span>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="icons/fast.svg" alt="Fast">
+                    </div>
+                    <h3>Fast</h3>
+                    <p>The instant confirmation of off-chain transactions provides a split second payment confirmation experience suitable for various instant payment scenarios.</p>
+                    <div class="feature-highlights">
+                        <span class="highlight">Faster ✦</span>
+                        <span class="highlight">P2P ✦</span>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="icons/multi-asset.svg" alt="Multi-Asset Support">
+                    </div>
+                    <h3>Multi-Asset Support</h3>
+                    <p>Fiber Network supports payments in a variety of digital assets, offering users a broader range of payment options.</p>
+                    <div class="feature-highlights">
+                        <span class="highlight">Multi-Asset ✦</span>
+                        <span class="highlight">Cheaper ✦</span>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="icons/interoperability.svg" alt="Interoperability">
+                    </div>
+                    <h3>Interoperability</h3>
+                    <p>Fiber Network supports interoperability with the Bitcoin Lightning Network, providing support for cross-chain payments and asset transfers.</p>
+                    <div class="feature-highlights">
+                        <span class="highlight">Interoperability ✦</span>
+                        <span class="highlight">Multi-Asset Support ✦</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="comparison">
+        <div class="container">
+            <h2>Lightning Network vs. Fiber Network</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Fiber Network</th>
+                            <th>Lightning Network</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Assets</td>
+                            <td>CKB/RGB++</td>
+                            <td>BTC Only</td>
+                        </tr>
+                        <tr>
+                            <td>Cross Chain Hub</td>
+                            <td>Yes</td>
+                            <td>No</td>
+                        </tr>
+                        <tr>
+                            <td>Watchtower Storage</td>
+                            <td>O(1)</td>
+                            <td>O(n)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hybrid Lightning Network Section -->
+    <section class="hybrid-network">
+        <div class="container">
+            <h2>Hybrid Lightning Network</h2>
+            <p class="section-subtitle">Combining Lightning Network and Fiber Network to enable instant, secure, cross-chain payments and asset transfers.</p>
+
+            <div class="hybrid-features">
+                <div class="hybrid-feature">
+                    <h3>Stablecoin Support</h3>
+                    <p><a href="http://www.rgbppfans.com/" target="_blank">RGB++ Stablecoins</a> can seamlessly enter the Hybrid Lightning Network.</p>
+                </div>
+                <div class="hybrid-feature">
+                    <h3>Cross-Network Atomic Swaps</h3>
+                    <p>Edge nodes enable secure, instant exchanges across Lightning and Fiber networks.</p>
+                </div>
+                <div class="hybrid-feature">
+                    <h3>Network Enhancement</h3>
+                    <p>The combined infrastructure improves network connectivity and boosts overall liquidity.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Section -->
+    <section id="community" class="community">
+        <div class="container">
+            <h2>Join Our Community</h2>
+            <div class="social-links">
+                <a href="https://x.com/@FiberDevs" target="_blank" class="social-link">
+                    <img src="icons/twitter.svg" alt="Twitter">
+                </a>
+                <a href="https://github.com/nervosnetwork/fiber" target="_blank" class="social-link">
+                    <img src="icons/github.svg" alt="GitHub">
+                </a>
+                <a href="https://substack.com/@ckbecofund" target="_blank" class="social-link">
+                    <img src="icons/substack.svg" alt="Substack">
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="icons/fiber-logo.svg" alt="Fiber Network">
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank">Lightpaper</a>
+                    <a href="https://github.com/nervosnetwork/fiber" target="_blank">GitHub</a>
+                    <a href="http://www.rgbppfans.com/" target="_blank">RGB++ Stablecoins</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Fiber Network</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
