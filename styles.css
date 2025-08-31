@@ -60,6 +60,16 @@ body {
     height: 72px;
 }
 
+.nav-logo a {
+    display: block;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.nav-logo a:hover {
+    transform: translateY(-1px);
+}
+
 .nav-logo .logo {
     height: 32px;
     width: auto;
@@ -123,9 +133,11 @@ body {
     background: var(--background-light);
     display: flex;
     align-items: center;
+    justify-content: center;
     min-height: 100vh;
     position: relative;
     overflow: hidden;
+    gap: 60px;
 }
 
 .hero::before {
@@ -143,6 +155,8 @@ body {
 .hero-content {
     flex: 1;
     max-width: 600px;
+    margin-left: 80px;
+    text-align: left;
 }
 
 .hero-title {
@@ -1769,10 +1783,16 @@ body {
         flex-direction: column;
         text-align: center;
         padding: 100px 24px 60px;
+        gap: 40px;
+    }
+
+    .hero-content {
+        margin-left: 0;
+        text-align: center;
     }
 
     .hero-visual {
-        margin-top: 40px;
+        margin-top: 0;
     }
 
     .network-animation {

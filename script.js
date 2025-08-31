@@ -5,7 +5,11 @@ const totalSteps = 4;
 function showStep(stepNumber) {
     // Hide all steps
     document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('active');
+        ste        // 性能优化：降低初始路由数和更新频率
+        this.hotEdges = new Set();
+        this.maxRoutes = 8;        // 降低最大路由数
+        this.prevTs = 0;
+        this.frameAvg = 16;assList.remove('active');
     });
 
     // Show current step
@@ -215,12 +219,18 @@ class LightningNetworkCanvas {
         window.addEventListener('resize', () => this.resize());
         this.bindInteraction();
 
+        // 减少初始路由数量，延迟加载
         this.generateGraph();
         this.preRenderStatic();
-        this.updateOverlayHubs(); // 同步 overlay 的 hub 指示器到真实节点
-        this.spawnRoutes(10);
-        this.updateStats();
-        this.statsTimer = setInterval(() => this.updateStats(), 1200);
+        this.updateOverlayHubs();
+
+        // 延迟生成路由，先显示静态网络
+        setTimeout(() => {
+            this.spawnRoutes(5); // 减少初始路由数
+            this.updateStats();
+        }, 100);
+
+        this.statsTimer = setInterval(() => this.updateStats(), 1500); // 降低更新频率
 
         this.animate = this.animate.bind(this);
         requestAnimationFrame(this.animate);
@@ -284,85 +294,78 @@ class LightningNetworkCanvas {
         return this.nodes.length - 1;
     }
 
-    // 生成更接近 Lightning Explorer 的密集拓扑（减少总节点数）
+    // 生成精简的网络拓扑（大幅减少节点数，优化性能）
     generateGraph() {
         this.nodes = [];
         this.edges = [];
 
-        const area = this.width * this.height;
-        const targetNodes = Math.round(Math.min(1100, Math.max(420, area / 650))); // 降低整体密度
+        // 大幅减少节点总数，针对性能优化
+        const maxNodes = Math.min(200, Math.max(80, this.width * this.height / 3000));
 
-        // 预设几个大型 hub 聚类锚点（左右两侧各有明显聚簇）
+        // 减少 hub 数量，集中连接
         const hubs = [
-            { x: this.width * 0.18, y: this.height * (0.45 + (this.rand() - 0.5) * 0.2), r: 10 },
-            { x: this.width * 0.35, y: this.height * (0.50 + (this.rand() - 0.5) * 0.2), r: 12 },
-            { x: this.width * 0.55, y: this.height * (0.50 + (this.rand() - 0.5) * 0.2), r: 12 },
-            { x: this.width * 0.80, y: this.height * (0.48 + (this.rand() - 0.5) * 0.15), r: 14 },
-            { x: this.width * 0.08, y: this.height * (0.25 + (this.rand() - 0.5) * 0.1), r: 9 },
+            { x: this.width * 0.25, y: this.height * 0.45, r: 12 },
+            { x: this.width * 0.55, y: this.height * 0.50, r: 14 },
+            { x: this.width * 0.75, y: this.height * 0.48, r: 12 },
         ];
 
         const hubIdx = hubs.map(h => this.addNode(h.x, h.y, h.r, 'hub'));
 
-        // 密度调低
-        const clusterPerHub = 3;
-        const microPerHub = 30;
-        const secondPerHub = 18;
+        // 每个 hub 周围少量节点
+        const secondPerHub = 8;  // 从18减少到8
+        const microPerHub = 12;  // 从30减少到12
 
         hubs.forEach((h) => {
+            // 二级节点
             for (let i = 0; i < secondPerHub; i++) {
-                const ang = (i / secondPerHub) * Math.PI * 2 + this.rand() * 0.6;
-                const dist = 35 + this.rand() * 60;
+                const ang = (i / secondPerHub) * Math.PI * 2 + this.rand() * 0.5;
+                const dist = 40 + this.rand() * 50;
                 const x = h.x + Math.cos(ang) * dist;
                 const y = h.y + Math.sin(ang) * dist;
-                this.addNode(x, y, 3 + this.rand() * 2.2, 'secondary');
+                this.addNode(x, y, 3 + this.rand() * 2, 'secondary');
             }
+            // 微节点
             for (let i = 0; i < microPerHub; i++) {
                 const ang = this.rand() * Math.PI * 2;
-                const dist = 70 + this.rand() * 110;
+                const dist = 80 + this.rand() * 80;
                 const x = h.x + Math.cos(ang) * dist;
                 const y = h.y + Math.sin(ang) * dist;
-                this.addNode(x, y, 1 + this.rand() * 1.4, 'micro');
-            }
-            for (let c = 0; c < clusterPerHub; c++) {
-                const ang = this.rand() * Math.PI * 2;
-                const base = 110 + this.rand() * 150;
-                const cx = h.x + Math.cos(ang) * base;
-                const cy = h.y + Math.sin(ang) * base;
-                const size = 8 + Math.floor(this.rand() * 16);
-                for (let i = 0; i < size; i++) {
-                    const a2 = this.rand() * Math.PI * 2;
-                    const d2 = 10 + this.rand() * 36;
-                    const x = cx + Math.cos(a2) * d2;
-                    const y = cy + Math.sin(a2) * d2;
-                    this.addNode(x, y, 1 + this.rand() * 1.1, 'micro');
-                }
+                this.addNode(x, y, 1 + this.rand() * 1.2, 'micro');
             }
         });
 
-        // 中央密集带（适度减少）
-        const bandNodes = Math.max(120, Math.round(targetNodes - this.nodes.length));
-        for (let i = 0; i < bandNodes; i++) {
-            const x = this.width * (0.16 + this.rand() * 0.68);
-            const y = this.height * (0.32 + this.rand() * 0.36) + (this.rand() - 0.5) * 10;
-            this.addNode(x, y, 1 + this.rand() * 1.3, 'micro');
+        // 简化中央区域节点
+        const remainingNodes = Math.max(20, maxNodes - this.nodes.length);
+        for (let i = 0; i < remainingNodes; i++) {
+            const x = this.width * (0.2 + this.rand() * 0.6);
+            const y = this.height * (0.35 + this.rand() * 0.3);
+            this.addNode(x, y, 1 + this.rand() * 1.2, 'micro');
         }
 
         this.buildEdges();
     }
 
+    // 优化边生成算法，减少计算复杂度
     buildEdges() {
         const pts = this.nodes;
-        const gridSize = 40; // 网格加速近邻
+        if (pts.length < 2) return;
+
+        // 简化网格，使用更大的网格尺寸
+        const gridSize = 60;
         const cols = Math.ceil(this.width / gridSize);
         const rows = Math.ceil(this.height / gridSize);
         const grid = new Array(cols * rows).fill(0).map(() => []);
-        const gi = (x, y) => Math.max(0, Math.min(cols - 1, Math.floor(x / gridSize))) +
-                             Math.max(0, Math.min(rows - 1, Math.floor(y / gridSize))) * cols;
+        const gi = (x, y) => {
+            const col = Math.max(0, Math.min(cols - 1, Math.floor(x / gridSize)));
+            const row = Math.max(0, Math.min(rows - 1, Math.floor(y / gridSize)));
+            return col + row * cols;
+        };
 
         pts.forEach((p, i) => grid[gi(p.x, p.y)].push(i));
 
-        const maxDeg = (i) => pts[i].type === 'hub' ? 24 : pts[i].type === 'secondary' ? 8 : 4;
-        const radius = (i) => pts[i].type === 'hub' ? 220 : pts[i].type === 'secondary' ? 140 : 75;
+        // 减少最大连接数
+        const maxDeg = (i) => pts[i].type === 'hub' ? 12 : pts[i].type === 'secondary' ? 6 : 3;
+        const radius = (i) => pts[i].type === 'hub' ? 180 : pts[i].type === 'secondary' ? 120 : 60;
 
         const seen = new Set();
         const addEdge = (a, b, w) => {
@@ -370,44 +373,60 @@ class LightningNetworkCanvas {
             if (seen.has(key)) return;
             seen.add(key);
             this.edges.push({ a, b, w, heat: 0 });
+            if (!pts[a].neighbors) pts[a].neighbors = [];
+            if (!pts[b].neighbors) pts[b].neighbors = [];
             pts[a].neighbors.push(b);
             pts[b].neighbors.push(a);
         };
 
+        // 简化邻居查找
         for (let i = 0; i < pts.length; i++) {
             const p = pts[i];
             const cx = Math.floor(p.x / gridSize);
             const cy = Math.floor(p.y / gridSize);
             const r = radius(i);
-            const cells = [];
-            const rx = Math.ceil(r / gridSize);
-            for (let dx = -rx; dx <= rx; dx++) {
-                for (let dy = -rx; dy <= rx; dy++) {
+
+            // 减少搜索范围
+            const searchRange = Math.min(2, Math.ceil(r / gridSize));
+            const candidates = [];
+
+            for (let dx = -searchRange; dx <= searchRange; dx++) {
+                for (let dy = -searchRange; dy <= searchRange; dy++) {
                     const gx = cx + dx, gy = cy + dy;
-                    if (gx >= 0 && gy >= 0 && gx < cols && gy < rows) cells.push(gx + gy * cols);
+                    if (gx >= 0 && gy >= 0 && gx < cols && gy < rows) {
+                        const cellIndex = gx + gy * cols;
+                        if (grid[cellIndex]) {
+                            grid[cellIndex].forEach(j => {
+                                if (j !== i) candidates.push(j);
+                            });
+                        }
+                    }
                 }
             }
-            const candidates = [];
-            cells.forEach(ci => {
-                grid[ci].forEach(j => { if (j !== i) candidates.push(j); });
-            });
+
+            // 限制候选节点数量
+            const maxCandidates = Math.min(30, candidates.length);
+            if (candidates.length > maxCandidates) {
+                candidates.length = maxCandidates;
+            }
 
             candidates.sort((j, k) => (this.dist2(p, pts[j]) - this.dist2(p, pts[k])));
-            const deg = maxDeg(i);
+
+            const maxConnections = maxDeg(i);
             let added = 0;
+
             for (let c of candidates) {
-                if (added >= deg) break;
+                if (added >= maxConnections) break;
                 const d = Math.sqrt(this.dist2(p, pts[c]));
                 if (d <= r) {
-                    addEdge(i, c, 1 - d / (r + 1));
+                    addEdge(i, c, Math.max(0.1, 1 - d / (r + 1)));
                     added++;
                 }
             }
         }
 
-        // 为边建立索引，便于快速加热
-        if (!this.edgeIndex) this.edgeIndex = new Map();
-        else this.edgeIndex.clear();
+        // 建立边索引
+        this.edgeIndex = new Map();
         for (let i = 0; i < this.edges.length; i++) {
             const e = this.edges[i];
             const k = e.a < e.b ? `${e.a}-${e.b}` : `${e.b}-${e.a}`;
@@ -507,59 +526,116 @@ class LightningNetworkCanvas {
         ctx.restore();
     }
 
+    // 优化静态层渲染，减少绘制操作
     preRenderStatic() {
         const ctx = this.bctx;
         const w = this.width, h = this.height;
         ctx.clearRect(0, 0, w, h);
 
-        // 背景微光叠加
+        // 简化背景效果
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        const radial = ctx.createRadialGradient(w * 0.5, h * 0.5, 10, w * 0.5, h * 0.5, Math.max(w, h) * 0.6);
-        radial.addColorStop(0, 'rgba(80,180,255,0.06)');
+        const radial = ctx.createRadialGradient(w * 0.5, h * 0.5, 10, w * 0.5, h * 0.5, Math.max(w, h) * 0.5);
+        radial.addColorStop(0, 'rgba(80,180,255,0.04)');
         radial.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = radial;
         ctx.fillRect(0, 0, w, h);
         ctx.restore();
 
-        // 画通道（细线，青色叠加）
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.lineCap = 'round';
-        for (const e of this.edges) {
-            const a = this.nodes[e.a], b = this.nodes[e.b];
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.lineWidth = 0.6 + e.w * 1.4;
-            ctx.strokeStyle = `rgba(120, 230, 255, ${0.05 + e.w * 0.18})`;
-            ctx.shadowColor = 'rgba(120,230,255,0.3)';
-            ctx.shadowBlur = 6;
-            ctx.stroke();
-        }
-        ctx.restore();
+        // 批量绘制边，减少状态切换
+        if (this.edges.length > 0) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.lineCap = 'round';
+            ctx.shadowColor = 'rgba(120,230,255,0.2)';
+            ctx.shadowBlur = 4;
 
-        // 画节点（带彩色环）
+            // 按权重分批绘制
+            const heavyEdges = this.edges.filter(e => e.w > 0.6);
+            const lightEdges = this.edges.filter(e => e.w <= 0.6);
+
+            // 粗边
+            if (heavyEdges.length > 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = 'rgba(120, 230, 255, 0.15)';
+                heavyEdges.forEach(e => {
+                    const a = this.nodes[e.a], b = this.nodes[e.b];
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                });
+                ctx.stroke();
+            }
+
+            // 细边
+            if (lightEdges.length > 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 0.8;
+                ctx.strokeStyle = 'rgba(120, 230, 255, 0.08)';
+                lightEdges.forEach(e => {
+                    const a = this.nodes[e.a], b = this.nodes[e.b];
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                });
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // 批量绘制节点
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        for (const n of this.nodes) {
+
+        // 按类型分批绘制
+        const hubs = this.nodes.filter(n => n.type === 'hub');
+        const secondaries = this.nodes.filter(n => n.type === 'secondary');
+        const micros = this.nodes.filter(n => n.type === 'micro');
+
+        // Hub 节点
+        hubs.forEach(n => {
             // 外环
             ctx.beginPath();
-            ctx.arc(n.x, n.y, Math.max(1, n.r + 1.2), 0, Math.PI * 2);
+            ctx.arc(n.x, n.y, n.r + 1.5, 0, Math.PI * 2);
             ctx.strokeStyle = this.alpha(n.ring, 0.9);
-            ctx.lineWidth = n.type === 'hub' ? 2.4 : n.type === 'secondary' ? 1.6 : 1.2;
+            ctx.lineWidth = 2.2;
             ctx.stroke();
             // 内核
-            const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(1, n.r + 0.5));
-            g.addColorStop(0, 'rgba(255,255,255,0.95)');
-            g.addColorStop(1, 'rgba(180,240,255,0.75)');
-            ctx.fillStyle = g;
-            ctx.shadowColor = 'rgba(120,220,255,0.6)';
-            ctx.shadowBlur = n.type === 'hub' ? 16 : n.type === 'secondary' ? 10 : 6;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.shadowColor = 'rgba(120,220,255,0.5)';
+            ctx.shadowBlur = 12;
             ctx.beginPath();
             ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
             ctx.fill();
-        }
+        });
+
+        // 二级节点
+        secondaries.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r + 1, 0, Math.PI * 2);
+            ctx.strokeStyle = this.alpha(n.ring, 0.8);
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(220,240,255,0.8)';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 微节点
+        ctx.shadowBlur = 3;
+        micros.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r + 0.8, 0, Math.PI * 2);
+            ctx.strokeStyle = this.alpha(n.ring, 0.7);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(200,235,255,0.7)';
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
         ctx.restore();
     }
 
