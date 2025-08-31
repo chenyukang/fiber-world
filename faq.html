@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Fiber Network</title>
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">
+                    <img src="icons/fiber-logo.svg" alt="Fiber Network" class="logo">
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html#how-it-works">How it Works</a>
+                <a href="index.html#features">Features</a>
+                <a href="milestones.html">Milestones</a>
+                <a href="faq.html" class="active">FAQ</a>
+                <span class="nav-divider">|</span>
+                <a href="https://docs.fiber.world/showcase" target="_blank">Community</a>
+                <a href="https://docs.fiber.world/" target="_blank">Documentation</a>
+                <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="lightpaper-btn">Lightpaper</a>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+                    <svg class="theme-toggle-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <svg class="theme-toggle-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Mobile theme toggle -->
+            <button class="theme-toggle mobile-only" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+                <svg class="theme-toggle-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <svg class="theme-toggle-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section for FAQ -->
+    <section class="page-hero">
+        <div class="container">
+            <h1>Frequently Asked Questions</h1>
+            <p>Find answers to common questions about Fiber Network</p>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <div class="container">
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3>What is Fiber Network?</h3>
+                    <p>Fiber Network is a Layer 2 payment network built on CKB that enables instant, low-cost transactions through off-chain payment channels. It's designed to scale Satoshi's P2P electronic cash vision with enhanced privacy and interoperability features.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How does Fiber differ from Lightning Network?</h3>
+                    <p>While both use payment channels, Fiber Network supports multi-asset payments (CKB, RGB++ tokens), has O(1) watchtower storage complexity, and provides native cross-chain interoperability with Bitcoin Lightning Network through edge nodes.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What are RGB++ tokens?</h3>
+                    <p>RGB++ tokens are a new type of digital asset that can be issued and transferred on the CKB network. They provide enhanced privacy features and can seamlessly integrate with the Fiber Network for instant payments.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How do cross-chain atomic swaps work?</h3>
+                    <p>Edge nodes in the Fiber Network enable secure, trustless exchanges between different blockchain networks. Users can swap assets between Lightning Network and Fiber Network without requiring centralized exchanges.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What is the watchtower storage advantage?</h3>
+                    <p>Fiber Network's O(1) watchtower storage means that storage requirements remain constant regardless of the number of channels, making it more efficient than Lightning Network's O(n) storage that grows linearly with channel count.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>When will mainnet be available?</h3>
+                    <p>Fiber Network mainnet is planned for Q1 2025. The current testnet is available for developers and early adopters to test the functionality and provide feedback.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How can I get involved?</h3>
+                    <p>You can contribute to the project through our GitHub repository, join our community discussions, test the network on testnet, or integrate Fiber Network into your applications using our developer tools.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What wallets support Fiber Network?</h3>
+                    <p>Wallet integrations are currently in development. We're working with major CKB wallet providers to ensure seamless Fiber Network support upon mainnet launch.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="icons/fiber-logo.svg" alt="Fiber Network">
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank">Lightpaper</a>
+                    <a href="https://github.com/nervosnetwork/fiber" target="_blank">GitHub</a>
+                    <a href="http://www.rgbppfans.com/" target="_blank">RGB++ Stablecoins</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Fiber Network</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

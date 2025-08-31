@@ -1,7 +1,9 @@
 // Theme toggle functionality
 function toggleTheme() {
+  console.log('toggleTheme called'); // Debug log
   const currentTheme = document.documentElement.getAttribute('data-theme');
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  console.log('Switching from', currentTheme, 'to', newTheme); // Debug log
 
   // Set the new theme
   document.documentElement.setAttribute('data-theme', newTheme);
@@ -13,17 +15,25 @@ function toggleTheme() {
   handleNavbarScroll();
 }
 
+// Make sure the function is globally available
+window.toggleTheme = toggleTheme;
+
 // Initialize theme from localStorage or system preference
 function initTheme() {
+  console.log('initTheme called'); // Debug log
   const storedTheme = localStorage.getItem('theme');
   const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  console.log('Stored theme:', storedTheme, 'System prefers dark:', systemPrefersDark); // Debug log
 
   if (storedTheme) {
     document.documentElement.setAttribute('data-theme', storedTheme);
+    console.log('Set theme from storage:', storedTheme); // Debug log
   } else if (systemPrefersDark) {
     document.documentElement.setAttribute('data-theme', 'dark');
+    console.log('Set theme from system preference: dark'); // Debug log
   } else {
     document.documentElement.setAttribute('data-theme', 'light');
+    console.log('Set default theme: light'); // Debug log
   }
 }
 
@@ -127,8 +137,7 @@ function handleNavbarScroll() {
 
   // Detect current theme - prioritize data-theme attribute
   const dataTheme = document.documentElement.getAttribute('data-theme');
-  const isDarkMode = dataTheme === 'dark' ||
-                     (dataTheme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDarkMode = dataTheme === 'dark';
 
   if (window.scrollY > 50) {
     if (isDarkMode) {
@@ -394,55 +403,104 @@ class LightningNetworkCanvas {
     return this.nodes.length - 1;
   }
 
-  // 生成精简的网络拓扑（大幅减少节点数，优化性能）
+  // 生成精简的网络拓扑（增加节点数量以获得更丰富的网络效果）
   generateGraph() {
     this.nodes = [];
     this.edges = [];
 
-    // 大幅减少节点总数，针对性能优化
+    // 增加节点总数，创建更丰富的网络
     const maxNodes = Math.min(
-      200,
-      Math.max(80, (this.width * this.height) / 3000)
+      350,
+      Math.max(120, (this.width * this.height) / 2500)
     );
 
-    // 减少 hub 数量，集中连接
+    // 画布中心坐标
+    const centerX = this.width * 0.45;
+    const centerY = this.height * 0.52;
+
+    // 定义网络的有效分布区域（相对于中心的半径） - 增大网络占用空间
+    const networkRadiusX = Math.min(this.width * 0.5, 380); // 水平半径增大
+    const networkRadiusY = Math.min(this.height * 0.5, 350); // 垂直半径增大
+    const margin = 5; // 边界边距进一步减小
+
+    // 边界检查函数 - 基于中心分布
+    const clampToSafeBounds = (x, y, nodeRadius = 5) => {
+      const minX = margin + nodeRadius;
+      const maxX = this.width - margin - nodeRadius;
+      const minY = margin + nodeRadius;
+      const maxY = this.height - margin - nodeRadius;
+      return {
+        x: Math.max(minX, Math.min(maxX, x)),
+        y: Math.max(minY, Math.min(maxY, y))
+      };
+    };
+
+    // Hub 节点 - 以中心为基准，在椭圆区域内分布
     const hubs = [
-      { x: this.width * 0.25, y: this.height * 0.45, r: 12 },
-      { x: this.width * 0.55, y: this.height * 0.5, r: 14 },
-      { x: this.width * 0.75, y: this.height * 0.48, r: 12 },
+      {
+        x: centerX + networkRadiusX * (-0.5),
+        y: centerY + networkRadiusY * (-0.1),
+        r: 8
+      },
+      {
+        x: centerX + networkRadiusX * (-0.1),
+        y: centerY + networkRadiusY * (-0.5),
+        r: 6
+      },
+      {
+        x: centerX + networkRadiusX * (0.1),
+        y: centerY + networkRadiusY * (0),
+        r: 10
+      },
+      {
+        x: centerX + networkRadiusX * (0.5),
+        y: centerY + networkRadiusY * (-0.2),
+        r: 7
+      },
+      {
+        x: centerX + networkRadiusX * (0.6),
+        y: centerY + networkRadiusY * (0.3),
+        r: 9
+      },
     ];
 
     const hubIdx = hubs.map((h) => this.addNode(h.x, h.y, h.r, "hub"));
 
-    // 每个 hub 周围少量节点
-    const secondPerHub = 8; // 从18减少到8
-    const microPerHub = 12; // 从30减少到12
+    // 每个 hub 周围更多节点
+    const secondPerHub = 12; // 从8增加到12
+    const microPerHub = 18; // 从12增加到18
 
     hubs.forEach((h) => {
-      // 二级节点
+      // 二级节点 - 围绕 hub 分布
       for (let i = 0; i < secondPerHub; i++) {
         const ang = (i / secondPerHub) * Math.PI * 2 + this.rand() * 0.5;
-        const dist = 40 + this.rand() * 50;
-        const x = h.x + Math.cos(ang) * dist;
-        const y = h.y + Math.sin(ang) * dist;
-        this.addNode(x, y, 3 + this.rand() * 2, "secondary");
+        const dist = 30 + this.rand() * 40; // 稍微减小距离，保持紧凑
+        const rawX = h.x + Math.cos(ang) * dist;
+        const rawY = h.y + Math.sin(ang) * dist;
+        const clamped = clampToSafeBounds(rawX, rawY, 5);
+        this.addNode(clamped.x, clamped.y, 3 + this.rand() * 2, "secondary");
       }
-      // 微节点
+      // 微节点 - 围绕 hub 分布，距离稍远
       for (let i = 0; i < microPerHub; i++) {
         const ang = this.rand() * Math.PI * 2;
-        const dist = 80 + this.rand() * 80;
-        const x = h.x + Math.cos(ang) * dist;
-        const y = h.y + Math.sin(ang) * dist;
-        this.addNode(x, y, 1 + this.rand() * 1.2, "micro");
+        const dist = 60 + this.rand() * 60; // 调整距离，保持在中心区域
+        const rawX = h.x + Math.cos(ang) * dist;
+        const rawY = h.y + Math.sin(ang) * dist;
+        const clamped = clampToSafeBounds(rawX, rawY, 3);
+        this.addNode(clamped.x, clamped.y, 1 + this.rand() * 1.2, "micro");
       }
     });
 
-    // 简化中央区域节点
+    // 中央区域节点 - 在网络中心区域随机分布
     const remainingNodes = Math.max(20, maxNodes - this.nodes.length);
     for (let i = 0; i < remainingNodes; i++) {
-      const x = this.width * (0.2 + this.rand() * 0.6);
-      const y = this.height * (0.35 + this.rand() * 0.3);
-      this.addNode(x, y, 1 + this.rand() * 1.2, "micro");
+      // 在椭圆区域内生成随机位置
+      const angle = this.rand() * Math.PI * 2;
+      const radiusFactor = Math.sqrt(this.rand()) * 0.7; // 使用平方根分布，让节点更集中在中心
+      const x = centerX + Math.cos(angle) * networkRadiusX * radiusFactor;
+      const y = centerY + Math.sin(angle) * networkRadiusY * radiusFactor;
+      const clamped = clampToSafeBounds(x, y, 3);
+      this.addNode(clamped.x, clamped.y, 1 + this.rand() * 1.2, "micro");
     }
 
     this.buildEdges();
@@ -871,6 +929,17 @@ class LightningNetworkCanvas {
   }
 
   spawnRoutes(count = 6) {
+    // 定义不同类型支付路径的颜色主题
+    const colorThemes = [
+      { hue: 60, name: "Bitcoin", range: 20 },      // 金色系
+      { hue: 120, name: "Ethereum", range: 25 },    // 绿色系
+      { hue: 240, name: "Lightning", range: 30 },   // 蓝色系
+      { hue: 300, name: "DeFi", range: 25 },        // 紫色系
+      { hue: 0, name: "Emergency", range: 15 },     // 红色系
+      { hue: 180, name: "Stablecoin", range: 20 },  // 青色系
+      { hue: 30, name: "P2P", range: 15 },          // 橙色系
+    ];
+
     for (let i = 0; i < count; i++) {
       const start = this.pickNode(
         (x) => x.x < this.width * (0.35 + this.rand() * 0.2)
@@ -886,12 +955,21 @@ class LightningNetworkCanvas {
         3 + Math.floor(this.rand() * 2)
       );
       if (path.length < 2) continue;
+
+      // 选择随机颜色主题
+      const theme = colorThemes[Math.floor(this.rand() * colorThemes.length)];
+      const hue = theme.hue + (this.rand() - 0.5) * theme.range;
+
       this.routes.push({
         path,
         seg: 0,
         t: this.rand(),
         speed: 0.012 + this.rand() * 0.012,
-        hue: 30 + Math.floor(this.rand() * 60),
+        hue: Math.max(0, Math.min(360, hue)),
+        theme: theme.name,
+        // 添加额外的视觉属性
+        intensity: 0.7 + this.rand() * 0.3, // 支付强度影响亮度
+        priority: Math.random() > 0.7 ? 'high' : 'normal' // 高优先级支付更亮
       });
     }
   }
@@ -930,13 +1008,19 @@ class LightningNetworkCanvas {
     ctx.globalCompositeOperation = "lighter";
     const pts = route.path.map((i) => this.nodes[i]);
 
-    // 高亮路径通道
+    // 根据支付类型和优先级计算颜色和强度
+    const intensity = route.intensity || 0.8;
+    const baseAlpha = route.priority === 'high' ? 0.3 : 0.2;
+    const lightness = route.priority === 'high' ? 65 : 60;
+    const saturation = Math.min(100, 80 + intensity * 20);
+
+    // 高亮路径通道，使用增强的颜色
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = `hsla(${route.hue}, 100%, 60%, 0.20)`;
-    ctx.shadowColor = `hsla(${route.hue}, 100%, 60%, 0.35)`;
-    ctx.shadowBlur = 12;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = `hsla(${route.hue}, ${saturation}%, ${lightness}%, ${baseAlpha})`;
+    ctx.shadowColor = `hsla(${route.hue}, 100%, ${lightness}%, ${baseAlpha + 0.15})`;
+    ctx.shadowBlur = route.priority === 'high' ? 16 : 12;
+    ctx.lineWidth = route.priority === 'high' ? 2.5 : 2;
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -944,7 +1028,7 @@ class LightningNetworkCanvas {
 
     // 沿路整体轻微加热，当前段显著加热
     for (let i = 0; i < route.path.length - 1; i++)
-      this.addHeat(route.path[i], route.path[i + 1], 0.035);
+      this.addHeat(route.path[i], route.path[i + 1], 0.035 * intensity);
 
     // 沿边移动的支付粒子
     const segA = pts[route.seg];
@@ -953,33 +1037,36 @@ class LightningNetworkCanvas {
     const y = segA.y + (segB.y - segA.y) * route.t;
 
     // 当前段强加热并带动局部发光
-    this.addHeat(route.path[route.seg], route.path[route.seg + 1], 0.45);
+    this.addHeat(route.path[route.seg], route.path[route.seg + 1], 0.45 * intensity);
 
-    // 拖尾
-    for (let i = 0; i < 6; i++) {
-      const k = Math.max(0, 1 - i * 0.18);
+    // 增强的拖尾效果，根据支付类型调整
+    const tailLength = route.priority === 'high' ? 8 : 6;
+    for (let i = 0; i < tailLength; i++) {
+      const k = Math.max(0, 1 - i * (route.priority === 'high' ? 0.15 : 0.18));
+      const tailRadius = route.priority === 'high' ? 3.8 * k : 3.2 * k;
       ctx.beginPath();
       ctx.arc(
         x - (segB.x - segA.x) * i * 0.05,
         y - (segB.y - segA.y) * i * 0.05,
-        3.2 * k,
+        tailRadius,
         0,
         Math.PI * 2
       );
-      ctx.fillStyle = `hsla(${route.hue}, 100%, ${70 - i * 8}%, ${
-        0.35 - i * 0.05
+      ctx.fillStyle = `hsla(${route.hue}, ${saturation}%, ${lightness - i * 6}%, ${
+        (0.35 - i * 0.04) * intensity
       })`;
-      ctx.shadowColor = `hsla(${route.hue}, 100%, 60%, ${0.5 - i * 0.08})`;
+      ctx.shadowColor = `hsla(${route.hue}, 100%, ${lightness}%, ${(0.5 - i * 0.06) * intensity})`;
       ctx.shadowBlur = 16 * k;
       ctx.fill();
     }
 
-    // 主粒子
+    // 增强的主粒子
+    const mainRadius = route.priority === 'high' ? 4.2 : 3.5;
     ctx.beginPath();
-    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${route.hue}, 100%, 60%, 1)`;
-    ctx.shadowColor = `hsla(${route.hue}, 100%, 60%, 1)`;
-    ctx.shadowBlur = 20;
+    ctx.arc(x, y, mainRadius, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${route.hue}, ${saturation}%, ${lightness + 10}%, ${intensity})`;
+    ctx.shadowColor = `hsla(${route.hue}, 100%, ${lightness + 15}%, ${intensity})`;
+    ctx.shadowBlur = route.priority === 'high' ? 25 : 20;
     ctx.fill();
     ctx.restore();
 

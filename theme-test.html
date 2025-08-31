@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Toggle Test</title>
+    <style>
+        body {
+            padding: 50px;
+            font-family: Arial, sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] {
+            background-color: white;
+            color: black;
+        }
+
+        [data-theme="dark"] {
+            background-color: #1a1a1a;
+            color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .theme-info {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Theme Toggle Test</h1>
+    <button onclick="toggleTheme()">Toggle Theme</button>
+    <button onclick="checkTheme()">Check Current Theme</button>
+    <button onclick="resetTheme()">Reset Theme</button>
+
+    <div class="theme-info">
+        <p id="current-theme">Current theme: Unknown</p>
+        <p id="stored-theme">Stored theme: Unknown</p>
+        <p id="system-preference">System preference: Unknown</p>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            console.log('toggleTheme called');
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            console.log('Current theme:', currentTheme);
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            console.log('New theme:', newTheme);
+
+            // Set the new theme
+            document.documentElement.setAttribute('data-theme', newTheme);
+
+            // Store the preference in localStorage
+            localStorage.setItem('theme', newTheme);
+
+            updateThemeInfo();
+        }
+
+        // Initialize theme from localStorage or system preference
+        function initTheme() {
+            console.log('initTheme called');
+            const storedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            console.log('Stored theme:', storedTheme);
+            console.log('System prefers dark:', systemPrefersDark);
+
+            if (storedTheme) {
+                document.documentElement.setAttribute('data-theme', storedTheme);
+            } else if (systemPrefersDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+
+            updateThemeInfo();
+        }
+
+        function checkTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const storedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            console.log('--- Theme Check ---');
+            console.log('Current data-theme attribute:', currentTheme);
+            console.log('Stored in localStorage:', storedTheme);
+            console.log('System prefers dark:', systemPrefersDark);
+
+            updateThemeInfo();
+        }
+
+        function resetTheme() {
+            localStorage.removeItem('theme');
+            document.documentElement.removeAttribute('data-theme');
+            initTheme();
+        }
+
+        function updateThemeInfo() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'None';
+            const storedTheme = localStorage.getItem('theme') || 'None';
+            const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            document.getElementById('current-theme').textContent = `Current theme: ${currentTheme}`;
+            document.getElementById('stored-theme').textContent = `Stored theme: ${storedTheme}`;
+            document.getElementById('system-preference').textContent = `System preference: ${systemPrefersDark ? 'dark' : 'light'}`;
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing theme...');
+            initTheme();
+        });
+    </script>
+</body>
+</html>

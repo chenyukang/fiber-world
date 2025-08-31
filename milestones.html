@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestones - Fiber Network</title>
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">
+                    <img src="icons/fiber-logo.svg" alt="Fiber Network" class="logo">
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html#how-it-works">How it Works</a>
+                <a href="index.html#features">Features</a>
+                <a href="milestones.html" class="active">Milestones</a>
+                <a href="faq.html">FAQ</a>
+                <span class="nav-divider">|</span>
+                <a href="https://docs.fiber.world/showcase" target="_blank">Community</a>
+                <a href="https://docs.fiber.world/" target="_blank">Documentation</a>
+                <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="lightpaper-btn">Lightpaper</a>
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+                    <svg class="theme-toggle-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <svg class="theme-toggle-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Mobile theme toggle -->
+            <button class="theme-toggle mobile-only" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
+                <svg class="theme-toggle-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <svg class="theme-toggle-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section for Milestones -->
+    <section class="page-hero">
+        <div class="container">
+            <h1>Milestones</h1>
+            <p>Track the development progress of Fiber Network</p>
+        </div>
+    </section>
+
+    <!-- Milestones Section -->
+    <section class="milestones">
+        <div class="container">
+            <div class="milestones-timeline">
+                <div class="milestone completed">
+                    <div class="milestone-marker"></div>
+                    <div class="milestone-content">
+                        <h3>2024 Q3</h3>
+                        <p>Released POC1, Channels Management, On-Chain Contracts, Cross-Chain Demo for Lightning</p>
+                        <div class="milestone-status">✓ Completed</div>
+                    </div>
+                </div>
+                <div class="milestone completed">
+                    <div class="milestone-marker"></div>
+                    <div class="milestone-content">
+                        <h3>2024 Q4</h3>
+                        <p>Released POC2, Path Finding, Payment Routing. Released the first General Availability (GA) version of the Fiber node implementation, completed contract audit, and planned future upgrades.</p>
+                        <div class="milestone-status">✓ Completed</div>
+                    </div>
+                </div>
+                <div class="milestone in-progress">
+                    <div class="milestone-marker"></div>
+                    <div class="milestone-content">
+                        <h3>2025 Q1</h3>
+                        <p>Mainnet Contract Deployment. Release the first stable version of Fiber node implementation.</p>
+                        <div class="milestone-status">🔄 In Progress</div>
+                    </div>
+                </div>
+                <div class="milestone upcoming">
+                    <div class="milestone-marker"></div>
+                    <div class="milestone-content">
+                        <h3>2025 Q2</h3>
+                        <p>More features of payment: Payment Offers and Multi-path Payment. Support multi-hop of cross-chain transfer.</p>
+                        <div class="milestone-status">⏳ Upcoming</div>
+                    </div>
+                </div>
+                <div class="milestone upcoming">
+                    <div class="milestone-marker"></div>
+                    <div class="milestone-content">
+                        <h3>2025 Q3</h3>
+                        <p>Upgrade contract to support PTLC (Point Time Locked Contracts).</p>
+                        <div class="milestone-status">⏳ Upcoming</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="icons/fiber-logo.svg" alt="Fiber Network">
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank">Lightpaper</a>
+                    <a href="https://github.com/nervosnetwork/fiber" target="_blank">GitHub</a>
+                    <a href="http://www.rgbppfans.com/" target="_blank">RGB++ Stablecoins</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>© 2025 Fiber Network</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fiber Network - Satoshi's P2P Ecash Vision</title>
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,10 +22,11 @@
             <div class="nav-links">
                 <a href="#how-it-works">How it Works</a>
                 <a href="#features">Features</a>
-                <a href="#milestones">Milestones</a>
-                <a href="#faq">FAQ</a>
-                <a href="#comparison">Comparison</a>
-                <a href="#community">Community</a>
+                <a href="milestones.html">Milestones</a>
+                <a href="faq.html">FAQ</a>
+                <span class="nav-divider">|</span>
+                <a href="https://docs.fiber.world/showcase" target="_blank">Community</a>
+                <a href="https://docs.fiber.world/" target="_blank">Documentation</a>
                 <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="lightpaper-btn">Lightpaper</a>
                 <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode">
                     <svg class="theme-toggle-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -68,15 +70,15 @@
                 <div class="network-stats">
                     <div class="stat">
                         <span>Nodes:</span>
-                        <span class="stat-value" id="node-count">1,233</span>
+                        <span class="stat-value" id="node-count">0</span>
                     </div>
                     <div class="stat">
-                        <span>Channels:</span>
-                        <span class="stat-value" id="channel-count">4,238</span>
+                        <span>Channels:&nbsp</span>
+                        <span class="stat-value" id="channel-count">0</span>
                     </div>
                     <div class="stat">
                         <span>TPS:</span>
-                        <span class="stat-value" id="tps-count">23,847</span>
+                        <span class="stat-value" id="tps-count">0</span>
                     </div>
                 </div>
 
@@ -210,104 +212,6 @@
         </div>
     </section>
 
-    <!-- Milestones Section -->
-    <section id="milestones" class="milestones">
-        <div class="container">
-            <h2>Milestones</h2>
-            <div class="milestones-timeline">
-                <div class="milestone completed">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q4 2023 - Foundation</h3>
-                        <p>Initial protocol design and core architecture development. Research and specification of the Fiber Network protocol.</p>
-                        <div class="milestone-status">✓ Completed</div>
-                    </div>
-                </div>
-                <div class="milestone completed">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q1 2024 - Core Implementation</h3>
-                        <p>Implementation of basic payment channels and multi-hop routing functionality. Initial testnet deployment.</p>
-                        <div class="milestone-status">✓ Completed</div>
-                    </div>
-                </div>
-                <div class="milestone completed">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q2 2024 - Lightning Integration</h3>
-                        <p>Integration with Bitcoin Lightning Network for cross-chain interoperability. Development of edge nodes for atomic swaps.</p>
-                        <div class="milestone-status">✓ Completed</div>
-                    </div>
-                </div>
-                <div class="milestone in-progress">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q4 2024 - Multi-Asset Support</h3>
-                        <p>Implementation of RGB++ token support and multi-asset payment channels. Enhanced liquidity management.</p>
-                        <div class="milestone-status">🔄 In Progress</div>
-                    </div>
-                </div>
-                <div class="milestone upcoming">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q1 2025 - Mainnet Launch</h3>
-                        <p>Official mainnet deployment with full feature set. Public release and ecosystem expansion.</p>
-                        <div class="milestone-status">⏳ Upcoming</div>
-                    </div>
-                </div>
-                <div class="milestone upcoming">
-                    <div class="milestone-marker"></div>
-                    <div class="milestone-content">
-                        <h3>Q2 2025 - Ecosystem Growth</h3>
-                        <p>Partner integrations, wallet support, and developer tools. Enhanced user experience and broader adoption.</p>
-                        <div class="milestone-status">⏳ Upcoming</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="faq">
-        <div class="container">
-            <h2>Frequently Asked Questions</h2>
-            <div class="faq-grid">
-                <div class="faq-item">
-                    <h3>What is Fiber Network?</h3>
-                    <p>Fiber Network is a Layer 2 payment network built on CKB that enables instant, low-cost transactions through off-chain payment channels. It's designed to scale Satoshi's P2P electronic cash vision with enhanced privacy and interoperability features.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>How does Fiber differ from Lightning Network?</h3>
-                    <p>While both use payment channels, Fiber Network supports multi-asset payments (CKB, RGB++ tokens), has O(1) watchtower storage complexity, and provides native cross-chain interoperability with Bitcoin Lightning Network through edge nodes.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>What are RGB++ tokens?</h3>
-                    <p>RGB++ tokens are a new type of digital asset that can be issued and transferred on the CKB network. They provide enhanced privacy features and can seamlessly integrate with the Fiber Network for instant payments.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>How do cross-chain atomic swaps work?</h3>
-                    <p>Edge nodes in the Fiber Network enable secure, trustless exchanges between different blockchain networks. Users can swap assets between Lightning Network and Fiber Network without requiring centralized exchanges.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>What is the watchtower storage advantage?</h3>
-                    <p>Fiber Network's O(1) watchtower storage means that storage requirements remain constant regardless of the number of channels, making it more efficient than Lightning Network's O(n) storage that grows linearly with channel count.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>When will mainnet be available?</h3>
-                    <p>Fiber Network mainnet is planned for Q1 2025. The current testnet is available for developers and early adopters to test the functionality and provide feedback.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>How can I get involved?</h3>
-                    <p>You can contribute to the project through our GitHub repository, join our community discussions, test the network on testnet, or integrate Fiber Network into your applications using our developer tools.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>What wallets support Fiber Network?</h3>
-                    <p>Wallet integrations are currently in development. We're working with major CKB wallet providers to ensure seamless Fiber Network support upon mainnet launch.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Comparison Section -->
     <section id="comparison" class="comparison">
         <div class="container">
@@ -351,14 +255,17 @@
 
             <div class="hybrid-features">
                 <div class="hybrid-feature">
+                    <img src="imgs/rgbpp.png" alt="RGB++ Stablecoins" class="hybrid-feature-icon">
                     <h3>Stablecoin Support</h3>
                     <p><a href="http://www.rgbppfans.com/" target="_blank">RGB++ Stablecoins</a> can seamlessly enter the Hybrid Lightning Network.</p>
                 </div>
                 <div class="hybrid-feature">
+                    <img src="imgs/hub-node.png" alt="Cross-Network Atomic Swaps" class="hybrid-feature-icon">
                     <h3>Cross-Network Atomic Swaps</h3>
                     <p>Edge nodes enable secure, instant exchanges across Lightning and Fiber networks.</p>
                 </div>
                 <div class="hybrid-feature">
+                    <img src="imgs/boost.png" alt="Network Enhancement" class="hybrid-feature-icon">
                     <h3>Network Enhancement</h3>
                     <p>The combined infrastructure improves network connectivity and boosts overall liquidity.</p>
                 </div>

@@ -26,8 +26,22 @@
 }
 
 /* Dark mode */
+[data-theme="dark"] {
+    --text-primary: #F2F2F7;
+    --text-secondary: #98989D;
+    --background-light: #000000;
+    --background-dark: #1C1C1E;
+    --card-background: #1C1C1E;
+    --border-color: #38383A;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --nav-background: rgba(28, 28, 30, 0.8);
+    --hero-background: #000000;
+}
+
+/* System preference fallback - only applies when no data-theme is set */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme]) {
         --text-primary: #F2F2F7;
         --text-secondary: #98989D;
         --background-light: #000000;
@@ -41,22 +55,9 @@
     }
 
     /* Canvas network animation adjustments for dark mode */
-    .network-animation {
+    :root:not([data-theme]) .network-animation {
         filter: brightness(1.2) contrast(0.9);
     }
-}
-
-[data-theme="dark"] {
-    --text-primary: #F2F2F7;
-    --text-secondary: #98989D;
-    --background-light: #000000;
-    --background-dark: #1C1C1E;
-    --card-background: #1C1C1E;
-    --border-color: #38383A;
-    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
-    --nav-background: rgba(28, 28, 30, 0.8);
-    --hero-background: #000000;
 }
 
 [data-theme="dark"] .network-animation {
@@ -130,7 +131,7 @@ body {
 
 /* Dark mode logo visibility fix */
 @media (prefers-color-scheme: dark) {
-    .nav-logo .logo {
+    :root:not([data-theme]) .nav-logo .logo {
         filter: invert(1) brightness(0.9);
     }
 }
@@ -168,17 +169,17 @@ body {
 
 /* Dark mode enhancements for theme toggle */
 @media (prefers-color-scheme: dark) {
-    .theme-toggle {
+    :root:not([data-theme]) .theme-toggle {
         background: rgba(56, 56, 58, 0.6);
         border-color: rgba(98, 98, 102, 0.8);
     }
 
-    .theme-toggle:hover {
+    :root:not([data-theme]) .theme-toggle:hover {
         background: rgba(56, 56, 58, 0.9);
         border-color: var(--primary-color);
     }
 
-    .theme-toggle-icon {
+    :root:not([data-theme]) .theme-toggle-icon {
         color: rgba(242, 242, 247, 0.9);
     }
 }
@@ -229,11 +230,11 @@ body {
 
 /* Dark mode icon (moon) */
 @media (prefers-color-scheme: dark) {
-    .theme-toggle-icon.sun {
+    :root:not([data-theme]) .theme-toggle-icon.sun {
         display: none;
     }
 
-    .theme-toggle-icon.moon {
+    :root:not([data-theme]) .theme-toggle-icon.moon {
         display: block;
     }
 }
@@ -287,6 +288,21 @@ body {
     width: 100%;
 }
 
+.nav-links a.active {
+    color: var(--primary-color);
+}
+
+.nav-links a.active::after {
+    width: 100%;
+}
+
+.nav-divider {
+    color: var(--text-secondary);
+    margin: 0 8px;
+    font-weight: 300;
+    opacity: 0.6;
+}
+
 .lightpaper-btn {
     background: var(--gradient-primary);
     color: white !important;
@@ -316,6 +332,80 @@ body {
     position: relative;
     overflow: hidden;
     gap: 60px;
+}
+
+/* Page Hero Section */
+.page-hero {
+    padding: 8rem 2rem 4rem;
+    text-align: center;
+    background: linear-gradient(135deg, #8b9cf5 0%, #a586c4 100%);
+    color: white;
+    margin-top: 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Page hero background pattern */
+.page-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(255, 255, 255, 0.02) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.02) 75%);
+    background-size: 300px 300px, 200px 200px, 50px 50px;
+    background-position: 0 0, 150px 100px, 0 0;
+    pointer-events: none;
+}
+
+/* Dark mode page hero */
+[data-theme="dark"] .page-hero {
+    background: linear-gradient(135deg, #2D3748 0%, #4A5568 50%, #2B6CB0 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .page-hero {
+        background: linear-gradient(135deg, #2D3748 0%, #4A5568 50%, #2B6CB0 100%);
+    }
+}
+
+/* Dark mode pattern adjustment */
+[data-theme="dark"] .page-hero::before {
+    background-image:
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(255, 255, 255, 0.01) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.01) 75%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .page-hero::before {
+        background-image:
+            radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+            linear-gradient(45deg, rgba(255, 255, 255, 0.01) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.01) 75%);
+    }
+}
+
+.page-hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+.page-hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.page-hero p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .hero::before {
@@ -1165,10 +1255,6 @@ body {
         opacity: 0.6;
         transform: translate(650px, -80px) scale(0.8);
     }
-    100% {
-        opacity: 0;
-        transform: translate(700px, -100px) scale(0.3);
-    }
 }
 
 /* Specific Payment Path Animations Following Exact Edges */
@@ -1501,6 +1587,13 @@ body {
     .connection {
         height: 3px;
     }
+
+    /* Responsive hybrid feature icons */
+    .hybrid-feature-icon {
+        max-width: 90%;
+        padding: 10px;
+        margin: 0 auto 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1545,10 +1638,8 @@ body {
         padding: 12px;
         font-size: 14px;
     }
-}
 
-/* 小屏幕步骤图片优化 */
-@media (max-width: 480px) {
+    /* 小屏幕步骤图片优化 */
     .step-image {
         max-width: 100% !important;
         height: auto !important;
@@ -1571,6 +1662,49 @@ body {
 
     .steps-container {
         padding: 0 8px !important;
+        min-height: 450px !important;
+    }
+
+    .milestones h2,
+    .faq h2 {
+        font-size: 32px !important;
+        margin-bottom: 40px !important;
+    }
+
+    .milestones-timeline::before {
+        left: 10px !important;
+    }
+
+    .milestone {
+        padding-left: 40px !important;
+        margin-bottom: 32px !important;
+    }
+
+    .milestone-content {
+        padding: 20px !important;
+    }
+
+    .milestone-content h3 {
+        font-size: 18px !important;
+    }
+
+    .faq-item {
+        padding: 20px 0 !important;
+    }
+
+    /* Responsive hybrid feature icons */
+    .hybrid-feature-icon {
+        max-width: 90%;
+        padding: 8px;
+        margin: 0 auto 12px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .hybrid-feature-icon {
+        max-width: 90%;
+        padding: 16px;
+        margin: 0 auto 24px;
     }
 }
 
@@ -1830,7 +1964,7 @@ body {
 .comparison-table table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--card-background);
+       background: var(--card-background);
     border-radius: var(--border-radius-large);
     overflow: hidden;
     box-shadow: var(--shadow-light);
@@ -1934,6 +2068,33 @@ body {
     text-decoration: underline;
 }
 
+/* Hybrid feature icons */
+.hybrid-feature-icon {
+    max-width: 95%;
+    margin: 0 auto 20px;
+    display: block;
+    border-radius: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    object-fit: contain;
+}
+
+.hybrid-feature-icon:hover {
+    transform: translateY(-5px);
+}
+
+/* Dark mode icon adjustments */
+[data-theme="dark"] .hybrid-feature-icon {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .hybrid-feature-icon {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+}
+
 /* Community Section */
 .community {
     padding: 100px 0;
@@ -1976,15 +2137,287 @@ body {
     height: 32px;
 }
 
+/* GitHub icon theming */
+.social-link img[alt="GitHub"] {
+    filter: invert(1); /* White in light mode */
+}
+
 /* Dark mode fix for social icons */
 @media (prefers-color-scheme: dark) {
     .social-link img[alt="GitHub"] {
-        filter: invert(1) brightness(0.9);
+        filter: invert(0); /* Black in dark mode */
     }
 }
 
 [data-theme="dark"] .social-link img[alt="GitHub"] {
-    filter: invert(1) brightness(0.9);
+    filter: invert(0); /* Black in dark mode */
+}
+
+[data-theme="light"] .social-link img[alt="GitHub"] {
+    filter: invert(1); /* White in light mode */
+}
+
+/* Twitter icon theming */
+.social-link img[alt="Twitter"] {
+    filter: none; /* Default Twitter blue color */
+}
+
+/* Dark mode fix for Twitter icon */
+@media (prefers-color-scheme: dark) {
+    .social-link img[alt="Twitter"] {
+        filter: invert(1) brightness(0.9); /* White in dark mode */
+    }
+}
+
+[data-theme="dark"] .social-link img[alt="Twitter"] {
+    filter: invert(1) brightness(0.9); /* White in dark mode */
+}
+
+[data-theme="light"] .social-link img[alt="Twitter"] {
+    filter: none; /* Default color in light mode */
+}
+
+/* Milestones Section */
+.milestones {
+    padding: 100px 0;
+    background: var(--background-light);
+    position: relative;
+}
+
+/* Milestones background pattern for light mode */
+.milestones::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.05) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(99, 102, 241, 0.02) 25%, transparent 25%, transparent 75%, rgba(99, 102, 241, 0.02) 75%);
+    background-size: 200px 200px, 180px 180px, 40px 40px;
+    background-position: 0 0, 100px 100px, 0 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Dark mode background pattern for milestones */
+[data-theme="dark"] .milestones::before {
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(99, 102, 241, 0.05) 25%, transparent 25%, transparent 75%, rgba(99, 102, 241, 0.05) 75%);
+}
+
+@media (prefers-color-scheme: dark) {
+    .milestones::before {
+        background-image:
+            radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+            linear-gradient(45deg, rgba(99, 102, 241, 0.05) 25%, transparent 25%, transparent 75%, rgba(99, 102, 241, 0.05) 75%);
+    }
+}
+
+.milestones .container {
+    position: relative;
+    z-index: 1;
+}
+
+.milestones h2 {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 80px;
+    color: var(--text-primary);
+}
+
+.milestones-timeline {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.milestones-timeline::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.milestone {
+    position: relative;
+    margin-bottom: 60px;
+    padding-left: 80px;
+}
+
+.milestone-marker {
+    position: absolute;
+    left: -8px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid var(--border-color);
+    background: var(--card-background);
+}
+
+.milestone.completed .milestone-marker {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.milestone.in-progress .milestone-marker {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    animation: pulse 2s infinite;
+}
+
+.milestone.upcoming .milestone-marker {
+    background: var(--card-background);
+    border-color: var(--border-color);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.milestone-content {
+    background: var(--card-background);
+    padding: 32px;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-color);
+}
+
+.milestone-content h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.milestone-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.milestone-status {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    display: inline-block;
+}
+
+.milestone.completed .milestone-status {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.milestone.in-progress .milestone-status {
+    background: rgba(255, 149, 0, 0.1);
+    color: var(--accent-color);
+}
+
+.milestone.upcoming .milestone-status {
+    background: rgba(156, 163, 175, 0.1);
+    color: var(--text-secondary);
+}
+
+/* FAQ Section */
+.faq {
+    padding: 100px 0;
+    background: var(--card-background);
+    position: relative;
+}
+
+/* FAQ background pattern for light mode */
+.faq::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 75% 25%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 25% 75%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(168, 85, 247, 0.02) 0px, rgba(168, 85, 247, 0.02) 1px, transparent 1px, transparent 20px);
+    background-size: 220px 220px, 200px 200px, 30px 30px;
+    background-position: 0 0, 110px 110px, 0 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Dark mode background pattern for FAQ */
+[data-theme="dark"] .faq::before {
+    background-image:
+        radial-gradient(circle at 75% 25%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 25% 75%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(168, 85, 247, 0.04) 0px, rgba(168, 85, 247, 0.04) 1px, transparent 1px, transparent 20px);
+}
+
+@media (prefers-color-scheme: dark) {
+    .faq::before {
+        background-image:
+            radial-gradient(circle at 75% 25%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 25% 75%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+            repeating-linear-gradient(45deg, rgba(168, 85, 247, 0.04) 0px, rgba(168, 85, 247, 0.04) 1px, transparent 1px, transparent 20px);
+    }
+}
+
+.faq .container {
+    position: relative;
+    z-index: 1;
+}
+
+.faq h2 {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 80px;
+    color: var(--text-primary);
+}
+
+.faq-grid {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    padding: 32px 0;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.faq-item:last-child {
+    border-bottom: none;
+}
+
+.faq-item:hover {
+    opacity: 0.8;
+}
+
+.faq-item h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.faq-item p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
 }
 
 /* Footer */
@@ -2095,6 +2528,35 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .milestones-timeline::before {
+        left: 15px;
+    }
+
+    .milestone {
+        padding-left: 50px;
+        margin-bottom: 40px;
+    }
+
+    .milestone-marker {
+        left: -8px;
+    }
+
+    .milestone-content {
+        padding: 24px;
+    }
+
+    .milestone-content h3 {
+        font-size: 20px;
+    }
+
+    .faq-item {
+        padding: 24px 0;
+    }
+
+    .faq-item h3 {
+        font-size: 18px;
+    }
+
     .hybrid-features {
         grid-template-columns: 1fr;
     }
@@ -2198,5 +2660,39 @@ body {
     .steps-container {
         padding: 0 8px !important;
         min-height: 450px !important;
+    }
+
+    .milestones h2,
+    .faq h2 {
+        font-size: 32px !important;
+        margin-bottom: 40px !important;
+    }
+
+    .milestones-timeline::before {
+        left: 10px !important;
+    }
+
+    .milestone {
+        padding-left: 40px !important;
+        margin-bottom: 32px !important;
+    }
+
+    .milestone-content {
+        padding: 20px !important;
+    }
+
+    .milestone-content h3 {
+        font-size: 18px !important;
+    }
+
+    .faq-item {
+        padding: 20px 0 !important;
+    }
+
+    /* Responsive hybrid feature icons */
+    .hybrid-feature-icon {
+        max-width: 80%;
+        padding: 8px;
+        margin: 0 auto 12px;
     }
 }
