@@ -1,26 +1,79 @@
 :root {
+    /* Light mode colors */
     --primary-color: #007AFF;
     --secondary-color: #5856D6;
     --accent-color: #FF9500;
-    --text-primary: #1D1D1F;
-    --text-secondary: #86868B;
-    --background-light: #FBFBFD;
-    --background-dark: #1D1D1F;
-    --card-background: #FFFFFF;
-    --border-color: #D2D2D7;
     --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
     --gradient-secondary: linear-gradient(135deg, #FF9500 0%, #FF3B30 100%);
-    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
     --border-radius: 12px;
     --border-radius-large: 20px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light mode (default) */
+:root,
+[data-theme="light"] {
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+    --background-light: #FBFBFD;
+    --background-dark: #F2F2F7;
+    --card-background: #FFFFFF;
+    --border-color: #D2D2D7;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --nav-background: rgba(255, 255, 255, 0.8);
+    --hero-background: #FBFBFD;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #F2F2F7;
+        --text-secondary: #98989D;
+        --background-light: #000000;
+        --background-dark: #1C1C1E;
+        --card-background: #1C1C1E;
+        --border-color: #38383A;
+        --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+        --nav-background: rgba(28, 28, 30, 0.8);
+        --hero-background: #000000;
+    }
+
+    /* Canvas network animation adjustments for dark mode */
+    .network-animation {
+        filter: brightness(1.2) contrast(0.9);
+    }
+}
+
+[data-theme="dark"] {
+    --text-primary: #F2F2F7;
+    --text-secondary: #98989D;
+    --background-light: #000000;
+    --background-dark: #1C1C1E;
+    --card-background: #1C1C1E;
+    --border-color: #38383A;
+    --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --nav-background: rgba(28, 28, 30, 0.8);
+    --hero-background: #000000;
+}
+
+[data-theme="dark"] .network-animation {
+    filter: brightness(1.2) contrast(0.9);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+/* Smooth transitions for dark mode */
+*,
+*::before,
+*::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 body {
@@ -43,7 +96,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(251, 251, 253, 0.8);
+    background: var(--nav-background);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
     z-index: 1000;
@@ -75,10 +128,135 @@ body {
     width: auto;
 }
 
+/* Dark mode logo visibility fix */
+@media (prefers-color-scheme: dark) {
+    .nav-logo .logo {
+        filter: invert(1) brightness(0.9);
+    }
+}
+
+[data-theme="dark"] .nav-logo .logo {
+    filter: invert(1) brightness(0.9);
+}
+
 .nav-links {
     display: flex;
     align-items: center;
     gap: 32px;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    background: none;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-toggle:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+/* Dark mode enhancements for theme toggle */
+@media (prefers-color-scheme: dark) {
+    .theme-toggle {
+        background: rgba(56, 56, 58, 0.6);
+        border-color: rgba(98, 98, 102, 0.8);
+    }
+
+    .theme-toggle:hover {
+        background: rgba(56, 56, 58, 0.9);
+        border-color: var(--primary-color);
+    }
+
+    .theme-toggle-icon {
+        color: rgba(242, 242, 247, 0.9);
+    }
+}
+
+[data-theme="dark"] .theme-toggle {
+    background: rgba(56, 56, 58, 0.6);
+    border-color: rgba(98, 98, 102, 0.8);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+    background: rgba(56, 56, 58, 0.9);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .theme-toggle-icon {
+    color: rgba(242, 242, 247, 0.9);
+}
+
+/* Light mode enhancements for theme toggle */
+[data-theme="light"] .theme-toggle {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(210, 210, 215, 0.8);
+}
+
+[data-theme="light"] .theme-toggle:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: var(--primary-color);
+}
+
+[data-theme="light"] .theme-toggle-icon {
+    color: rgba(29, 29, 31, 0.9);
+}
+
+.theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    transition: var(--transition);
+}
+
+/* Light mode icon (sun) */
+.theme-toggle-icon.sun {
+    display: block;
+}
+
+.theme-toggle-icon.moon {
+    display: none;
+}
+
+/* Dark mode icon (moon) */
+@media (prefers-color-scheme: dark) {
+    .theme-toggle-icon.sun {
+        display: none;
+    }
+
+    .theme-toggle-icon.moon {
+        display: block;
+    }
+}
+
+[data-theme="dark"] .theme-toggle-icon.sun {
+    display: none;
+}
+
+[data-theme="dark"] .theme-toggle-icon.moon {
+    display: block;
+}
+
+[data-theme="light"] .theme-toggle-icon.sun {
+    display: block;
+}
+
+[data-theme="light"] .theme-toggle-icon.moon {
+    display: none;
+}
+
+/* Mobile theme toggle */
+.mobile-only {
+    display: none;
 }
 
 .nav-links a {
@@ -155,14 +333,14 @@ body {
 .hero-content {
     flex: 1;
     max-width: 600px;
-    margin-left: 80px;
+    margin-left: 120px;
     text-align: left;
 }
 
 .hero-title {
     font-size: clamp(48px, 8vw, 72px);
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.2;
     margin-bottom: 32px;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -231,6 +409,7 @@ body {
     justify-content: center;
     align-items: center;
     position: relative;
+    margin-right: 120px;
 }
 
 .network-animation {
@@ -1368,10 +1547,37 @@ body {
     }
 }
 
+/* 小屏幕步骤图片优化 */
+@media (max-width: 480px) {
+    .step-image {
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 250px !important;
+        margin-bottom: 24px !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        border-radius: 12px !important;
+    }
+
+    .step h3 {
+        font-size: 20px !important;
+        margin-bottom: 24px !important;
+    }
+
+    .step p {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+    }
+
+    .steps-container {
+        padding: 0 8px !important;
+    }
+}
+
 /* How it Works Section */
 .how-it-works {
     padding: 100px 0;
-    background: white;
+    background: var(--card-background);
 }
 
 .how-it-works h2 {
@@ -1384,18 +1590,24 @@ body {
 
 .steps-container {
     position: relative;
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
 }
 
 .step {
     display: none;
     text-align: center;
     animation: fadeIn 0.5s ease-in-out;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .step.active {
-    display: block;
+    display: flex;
 }
 
 .step h3 {
@@ -1407,12 +1619,14 @@ body {
 
 .step-image {
     width: 100%;
-    max-width: 400px;
-    height: 300px;
-    object-fit: cover;
+    height: auto;
+    max-height: 350px;
+    object-fit: contain;
+    object-position: center;
     border-radius: var(--border-radius-large);
     margin-bottom: 32px;
     box-shadow: var(--shadow-light);
+    display: block;
 }
 
 .step p {
@@ -1428,11 +1642,12 @@ body {
     justify-content: center;
     align-items: center;
     gap: 24px;
-    margin-top: 48px;
+    margin-top: auto;
+    padding-top: 48px;
 }
 
 .prev-btn, .next-btn {
-    background: white;
+    background: var(--card-background);
     border: 2px solid var(--border-color);
     border-radius: 50%;
     width: 48px;
@@ -1447,6 +1662,40 @@ body {
 .prev-btn:hover, .next-btn:hover {
     border-color: var(--primary-color);
     transform: scale(1.05);
+}
+
+/* Dark mode enhancements for prev/next buttons */
+@media (prefers-color-scheme: dark) {
+    .prev-btn, .next-btn {
+        background: rgba(56, 56, 58, 0.8);
+        border-color: rgba(98, 98, 102, 0.6);
+    }
+
+    .prev-btn:hover, .next-btn:hover {
+        background: rgba(56, 56, 58, 1);
+        border-color: var(--primary-color);
+    }
+
+    .prev-btn img, .next-btn img {
+        filter: invert(1) brightness(0.9);
+    }
+}
+
+[data-theme="dark"] .prev-btn,
+[data-theme="dark"] .next-btn {
+    background: rgba(56, 56, 58, 0.8);
+    border-color: rgba(98, 98, 102, 0.6);
+}
+
+[data-theme="dark"] .prev-btn:hover,
+[data-theme="dark"] .next-btn:hover {
+    background: rgba(56, 56, 58, 1);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .prev-btn img,
+[data-theme="dark"] .next-btn img {
+    filter: invert(1) brightness(0.9);
 }
 
 .prev-btn img, .next-btn img {
@@ -1561,7 +1810,7 @@ body {
 /* Comparison Section */
 .comparison {
     padding: 100px 0;
-    background: white;
+    background: var(--card-background);
 }
 
 .comparison h2 {
@@ -1637,7 +1886,7 @@ body {
 .section-subtitle {
     text-align: center;
     font-size: 20px;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     margin-bottom: 80px;
     max-width: 800px;
     margin-left: auto;
@@ -1672,7 +1921,7 @@ body {
 .hybrid-feature p {
     font-size: 16px;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
 }
 
 .hybrid-feature a {
@@ -1727,6 +1976,17 @@ body {
     height: 32px;
 }
 
+/* Dark mode fix for social icons */
+@media (prefers-color-scheme: dark) {
+    .social-link img[alt="GitHub"] {
+        filter: invert(1) brightness(0.9);
+    }
+}
+
+[data-theme="dark"] .social-link img[alt="GitHub"] {
+    filter: invert(1) brightness(0.9);
+}
+
 /* Footer */
 .footer {
     background: var(--background-dark);
@@ -1744,7 +2004,21 @@ body {
 
 .footer-logo img {
     height: 32px;
+}
+
+/* Footer logo theme adaptation */
+@media (prefers-color-scheme: dark) {
+    .footer-logo img {
+        filter: brightness(0) invert(1);
+    }
+}
+
+[data-theme="dark"] .footer-logo img {
     filter: brightness(0) invert(1);
+}
+
+[data-theme="light"] .footer-logo img {
+    filter: none;
 }
 
 .footer-links {
@@ -1754,14 +2028,14 @@ body {
 }
 
 .footer-links a {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     text-decoration: none;
     font-weight: 500;
     transition: var(--transition);
 }
 
 .footer-links a:hover {
-    color: white;
+    color: var(--text-primary);
 }
 
 .footer-copyright {
@@ -1769,7 +2043,7 @@ body {
 }
 
 .footer-copyright p {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
@@ -1777,6 +2051,22 @@ body {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
+    }
+
+    /* Show mobile theme toggle */
+    .mobile-only {
+        display: flex;
+    }
+
+    /* Adjust theme toggle size on mobile */
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+    }
+
+    .theme-toggle-icon {
+        width: 18px;
+        height: 18px;
     }
 
     .hero {
@@ -1793,6 +2083,7 @@ body {
 
     .hero-visual {
         margin-top: 0;
+        margin-right: 0;
     }
 
     .network-animation {
@@ -1823,6 +2114,20 @@ body {
 
     .step-controls {
         flex-wrap: wrap;
+    }
+
+    .steps-container {
+        max-width: 100%;
+        padding: 0 16px;
+        min-height: 500px;
+    }
+
+    .step-image {
+        max-width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: contain;
+        object-position: center;
     }
 }
 
@@ -1867,5 +2172,31 @@ body {
     .comparison-table td {
         padding: 12px;
         font-size: 14px;
+    }
+
+    /* 小屏幕步骤图片优化 */
+    .step-image {
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 250px !important;
+        margin-bottom: 24px !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        border-radius: 12px !important;
+    }
+
+    .step h3 {
+        font-size: 20px !important;
+        margin-bottom: 24px !important;
+    }
+
+    .step p {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+    }
+
+    .steps-container {
+        padding: 0 8px !important;
+        min-height: 450px !important;
     }
 }
