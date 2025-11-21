@@ -2048,7 +2048,8 @@ body {
 }
 
 [data-theme="light"] .hybrid-network {
-    background: rgba(28, 28, 30, 0.9);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text-primary);
 }
 
 .hybrid-network h2 {
@@ -2087,6 +2088,17 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+[data-theme="light"] .hybrid-feature {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-light);
+}
+
+[data-theme="light"] .hybrid-feature:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-medium);
+}
+
 .hybrid-feature h3 {
     font-size: 24px;
     font-weight: 600;
@@ -2123,6 +2135,10 @@ body {
     padding: 12px;
     transition: transform 0.3s ease, background-color 0.3s ease;
     object-fit: contain;
+}
+
+[data-theme="light"] .hybrid-feature-icon {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .hybrid-feature-icon:hover {
