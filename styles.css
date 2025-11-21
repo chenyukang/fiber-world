@@ -15,6 +15,9 @@
 /* Light mode (default) */
 :root,
 [data-theme="light"] {
+    --section-bg-1: #F4F4F4;
+    --section-bg-2: #FFFFFF;
+    --section-bg-3: #E8E8E8;
     --text-primary: #1A202C;
     --text-secondary: #4A5568;
     --background-light: #F7FAFC;
@@ -32,6 +35,9 @@
 
 /* Dark mode - Cyber/Geek Theme */
 [data-theme="dark"] {
+    --section-bg-1: #000000;
+    --section-bg-2: #111111;
+    --section-bg-3: #1A1A1A;
     --text-primary: #E2E8F0;
     --text-secondary: #A0AEC0;
     --background-light: #0D1117; /* Very dark blue-gray */
@@ -1730,13 +1736,14 @@ body {
 /* How it Works Section */
 .how-it-works {
     padding: 100px 0;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-2);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 [data-theme="dark"] .how-it-works {
-    background: rgba(28, 28, 30, 0.8);
+    background: var(--section-bg-2);
 }
 
 .how-it-works h2 {
@@ -1888,13 +1895,14 @@ body {
 /* Features Section */
 .features {
     padding: 100px 0;
-    background: rgba(251, 251, 253, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid var(--border-color);
 }
 
 [data-theme="dark"] .features {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--section-bg-1);
 }
 
 .features h2 {
@@ -1977,13 +1985,14 @@ body {
 /* Comparison Section */
 .comparison {
     padding: 100px 0;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid var(--border-color);
 }
 
 [data-theme="dark"] .comparison {
-    background: rgba(28, 28, 30, 0.8);
+    background: var(--section-bg-2);
 }
 
 .comparison h2 {
@@ -2041,14 +2050,15 @@ body {
 /* Hybrid Network Section */
 .hybrid-network {
     padding: 100px 0;
-    background: rgba(28, 28, 30, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    color: white;
+    background: var(--section-bg-3);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 [data-theme="light"] .hybrid-network {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--section-bg-3);
     color: var(--text-primary);
 }
 
@@ -2159,13 +2169,14 @@ body {
 /* Community Section */
 .community {
     padding: 100px 0;
-    background: rgba(251, 251, 253, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-1);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 [data-theme="dark"] .community {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--section-bg-1);
 }
 
 .community h2 {
@@ -2247,14 +2258,15 @@ body {
 /* Milestones Section */
 .milestones {
     padding: 100px 0;
-    background: rgba(251, 251, 253, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-2);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     position: relative;
 }
 
 [data-theme="dark"] .milestones {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--section-bg-2);
 }
 
 /* Milestones background pattern for light mode */
@@ -2407,14 +2419,15 @@ body {
 /* FAQ Section */
 .faq {
     padding: 100px 0;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--section-bg-1);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     position: relative;
 }
 
 [data-theme="dark"] .faq {
-    background: rgba(28, 28, 30, 0.8);
+    background: var(--section-bg-1);
 }
 
 /* FAQ background pattern for light mode */
@@ -2501,9 +2514,10 @@ body {
 
 /* Footer */
 .footer {
-    background: var(--background-dark);
-    color: white;
+    background: var(--section-bg-3);
+    color: var(--text-primary);
     padding: 60px 0;
+    border-top: 1px solid var(--border-color);
 }
 
 .footer-content {
