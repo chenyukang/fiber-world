@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Background Animation Canvas -->
+    <canvas id="networkCanvas"></canvas>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
@@ -63,36 +66,20 @@
                 <a href="https://github.com/nervosnetwork/fiber/blob/main/docs/light-paper.md" target="_blank" class="btn-primary">Read Lightpaper</a>
                 <a href="#how-it-works" class="btn-secondary">Learn More</a>
             </div>
-        </div>
-        <div class="hero-visual">
-            <div class="network-animation">
-                <!-- Network Stats -->
-                <div class="network-stats">
-                    <div class="stat">
-                        <span>Nodes:</span>
-                        <span class="stat-value" id="node-count">0</span>
-                    </div>
-                    <div class="stat">
-                        <span>Channels:&nbsp</span>
-                        <span class="stat-value" id="channel-count">0</span>
-                    </div>
-                    <div class="stat">
-                        <span>TPS:</span>
-                        <span class="stat-value" id="tps-count">0</span>
-                    </div>
+            
+            <!-- Network Stats (Floating) -->
+            <div class="network-stats-floating">
+                <div class="stat">
+                    <span>Nodes:</span>
+                    <span class="stat-value" id="node-count">0</span>
                 </div>
-
-                <!-- Dense Network Visualization -->
-                <canvas id="networkCanvas" width="700" height="550"></canvas>
-
-                <!-- Overlay Elements -->
-                <div class="network-overlay">
-                    <!-- Major Hub Indicators -->
-                    <div class="hub-indicator" style="top: 275px; left: 350px;"></div>
-                    <div class="hub-indicator" style="top: 200px; left: 200px;"></div>
-                    <div class="hub-indicator" style="top: 320px; left: 500px;"></div>
-                    <div class="hub-indicator" style="top: 150px; left: 450px;"></div>
-                    <div class="hub-indicator" style="top: 380px; left: 150px;"></div>
+                <div class="stat">
+                    <span>Channels:</span>
+                    <span class="stat-value" id="channel-count">0</span>
+                </div>
+                <div class="stat">
+                    <span>TPS:</span>
+                    <span class="stat-value" id="tps-count">0</span>
                 </div>
             </div>
         </div>
