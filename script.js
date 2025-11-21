@@ -267,7 +267,7 @@ function initNetworkAnimation() {
   // 此处保持占位，避免重复的 CSS 节点/连线模拟逻辑
 }
 
-// Advanced Network Visualization (Cardano-style 3D Particle Network)
+// Advanced Network Visualization (2D Clustered Map Style)
 class LightningNetworkCanvas {
   constructor(selector = "#networkCanvas") {
     this.canvas = document.querySelector(selector);
@@ -286,14 +286,12 @@ class LightningNetworkCanvas {
     // Listen for theme changes
     this.initThemeListener();
 
-    // 3D Network Data
-    this.nodes = []; // {x, y, z, tx, ty, type, ...}
-    this.connections = []; // {a, b, opacity}
-    this.packets = []; // {path: [nodeIdx, ...], currentIdx, progress, speed, ...}
+    // Network Data
+    this.nodes = []; 
+    this.connections = []; 
+    this.packets = []; 
     
     // Animation Parameters
-    this.rotation = { x: 0, y: 0 };
-    this.targetRotation = { x: 0, y: 0 };
     this.mouse = { x: 0, y: 0 };
     this.isHovering = false;
     this.introProgress = 0; // For expansion effect
@@ -331,8 +329,8 @@ class LightningNetworkCanvas {
 
   bindInteraction() {
     document.addEventListener("mousemove", (e) => {
-      this.mouse.x = (e.clientX - this.width / 2) * 0.0005;
-      this.mouse.y = (e.clientY - this.height / 2) * 0.0005;
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
       this.isHovering = true;
     });
     
@@ -346,90 +344,142 @@ class LightningNetworkCanvas {
     this.connections = [];
     
     const isMobile = window.innerWidth < 768;
-    const nodeCount = isMobile ? 70 : 180; // Increased node count
-    // Increased scale to occupy ~3/4 of screen visually
-    const baseScale = Math.min(this.width, this.height) * (isMobile ? 0.9 : 1.3); 
-    const connectionDistance = baseScale * 0.3; // Adjusted for density
+    // More nodes for a dense map look
+    const nodeCount = isMobile ? 100 : 300; 
     
-    // Create Nodes in a 3D sphere/cloud
+    // Create Clusters/Hubs
+    const hubCount = isMobile ? 3 : 6;
+    const hubs = [];
+    
+    // Define margins to keep hubs somewhat central but spread out
+    // Increased margins to avoid nodes hitting the screen edges (straight line effect)
+    const marginX = this.width * 0.2; 
+    const marginY = this.height * 0.2;
+    const safeWidth = this.width - marginX * 2;
+    const safeHeight = this.height - marginY * 2;
+
+    for (let i = 0; i < hubCount; i++) {
+        hubs.push({
+            x: marginX + Math.random() * safeWidth,
+            y: marginY + Math.random() * safeHeight,
+            id: i
+        });
+    }
+
+    // Create Nodes
     for (let i = 0; i < nodeCount; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos((Math.random() * 2) - 1);
-      // Distribute nodes: some core, some outer shell for depth
-      const dist = (Math.random() * 0.6 + 0.4) * baseScale / 2; 
+      let x, y, type, size;
       
+      // 10% are major hubs (including the initial centers)
+      // 20% are minor hubs
+      // 70% are leaf nodes
+      const rand = Math.random();
+      
+      if (i < hubCount) {
+          // Explicit super hubs
+          type = 'super_hub';
+          size = isMobile ? 8 : 12; // Much larger
+          x = hubs[i].x;
+          y = hubs[i].y;
+      } else if (rand > 0.90) {
+          type = 'hub';
+          size = isMobile ? 5 : 7;
+          // Random position but biased towards center
+          // Constrain random nodes closer to center
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * (Math.min(this.width, this.height) * 0.35);
+          x = (this.width / 2) + Math.cos(angle) * dist;
+          y = (this.height / 2) + Math.sin(angle) * dist;
+      } else {
+          type = 'node';
+          size = isMobile ? 2 : 3;
+          // Cluster around a random hub
+          const hub = hubs[Math.floor(Math.random() * hubs.length)];
+          const angle = Math.random() * Math.PI * 2;
+          // Gaussian-ish distribution
+          const dist = (Math.random() + Math.random()) * (Math.min(this.width, this.height) * 0.20); // Tighter clusters
+          x = hub.x + Math.cos(angle) * dist;
+          y = hub.y + Math.sin(angle) * dist;
+      }
+
+      // Keep within bounds - Soft constraint to avoid straight lines
+      // If out of bounds, move towards center instead of clamping
+      if (x < 20 || x > this.width - 20 || y < 20 || y > this.height - 20) {
+          const angle = Math.atan2(this.height/2 - y, this.width/2 - x);
+          const dist = Math.random() * 50;
+          x += Math.cos(angle) * dist * 2;
+          y += Math.sin(angle) * dist * 2;
+      }
+      
+      // Final safety clamp (should happen rarely now)
+      x = Math.max(20, Math.min(this.width - 20, x));
+      y = Math.max(20, Math.min(this.height - 20, y));
+
       this.nodes.push({
-        x: dist * Math.sin(phi) * Math.cos(theta),
-        y: dist * Math.sin(phi) * Math.sin(theta),
-        z: dist * Math.cos(phi),
+        x: x,
+        y: y,
         // Store original positions for expansion animation
-        targetX: dist * Math.sin(phi) * Math.cos(theta),
-        targetY: dist * Math.sin(phi) * Math.sin(theta),
-        targetZ: dist * Math.cos(phi),
-        type: Math.random() > 0.92 ? 'hub' : 'node',
-        size: Math.random() > 0.92 ? 10 : 3, // Larger hubs (was 6)
+        targetX: x,
+        targetY: y,
+        // Start from center for expansion
+        startX: this.width / 2,
+        startY: this.height / 2,
+        
+        vx: (type === 'super_hub' || type === 'hub') ? (Math.random() - 0.5) * 0.05 : (Math.random() - 0.5) * 0.5, // Hubs are stable
+        vy: (type === 'super_hub' || type === 'hub') ? (Math.random() - 0.5) * 0.05 : (Math.random() - 0.5) * 0.5,
+        
+        type: type,
+        size: size,
         pulse: Math.random() * Math.PI,
+        flash: 0,
         connections: []
       });
     }
 
-    // Pre-calculate connections based on 3D distance (initial topology)
+    // Connect Nodes
+    // 1. Connect everything to nearest hub(s)
+    // 2. Connect nearby nodes
+    const connectionDistance = Math.min(this.width, this.height) * 0.2;
+    
     for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i + 1; j < this.nodes.length; j++) {
-        const d = this.dist3d(this.nodes[i], this.nodes[j]);
-        // Limit connections per node to avoid clutter
-        if (d < connectionDistance && this.nodes[i].connections.length < 5 && this.nodes[j].connections.length < 5) {
-          this.connections.push({ a: i, b: j });
-          this.nodes[i].connections.push(j);
-          this.nodes[j].connections.push(i);
-        }
+      const nodeA = this.nodes[i];
+      // Sort other nodes by distance
+      const neighbors = [];
+      for (let j = 0; j < this.nodes.length; j++) {
+          if (i === j) continue;
+          const nodeB = this.nodes[j];
+          const dx = nodeA.x - nodeB.x;
+          const dy = nodeA.y - nodeB.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < connectionDistance) {
+              neighbors.push({ idx: j, dist: dist });
+          }
+       }
+      neighbors.sort((a, b) => a.dist - b.dist);
+      
+      // Connect to closest k neighbors
+      const maxConnections = nodeA.type === 'super_hub' ? 40 : (nodeA.type === 'hub' ? 20 : 4);
+      
+      for (let k = 0; k < Math.min(neighbors.length, maxConnections); k++) {
+          const targetIdx = neighbors[k].idx;
+          // Avoid duplicates
+          if (!nodeA.connections.includes(targetIdx)) {
+              // Add connection if target also has capacity (or is a hub)
+              const targetNode = this.nodes[targetIdx];
+              const targetMax = targetNode.type === 'super_hub' ? 40 : (targetNode.type === 'hub' ? 20 : 4);
+              
+              if (targetNode.connections.length < targetMax) {
+                  this.connections.push({ a: i, b: targetIdx, opacity: 1, state: 'stable' });
+                  nodeA.connections.push(targetIdx);
+                  targetNode.connections.push(i);
+              }
+          }
       }
     }
   }
 
-  dist3d(p1, p2) {
-    // Use target positions for distance calculation so topology is stable during expansion
-    const x1 = p1.targetX || p1.x;
-    const y1 = p1.targetY || p1.y;
-    const z1 = p1.targetZ || p1.z;
-    const x2 = p2.targetX || p2.x;
-    const y2 = p2.targetY || p2.y;
-    const z2 = p2.targetZ || p2.z;
-
-    return Math.sqrt(
-      Math.pow(x1 - x2, 2) + 
-      Math.pow(y1 - y2, 2) + 
-      Math.pow(z1 - z2, 2)
-    );
-  }
-
-  project(p) {
-    // Simple perspective projection
-    const fov = 1000; // Increased FOV for less distortion at edges
-    const scale = fov / (fov + p.z + 600); 
-    return {
-      x: p.x * scale + this.width / 2,
-      y: p.y * scale + this.height / 2,
-      scale: scale,
-      visible: scale > 0
-    };
-  }
-
-  rotatePoint(p, rotX, rotY) {
-    // Rotate Y
-    let x = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
-    let z = p.x * Math.sin(rotY) + p.z * Math.cos(rotY);
-    let y = p.y;
-
-    // Rotate X
-    let y2 = y * Math.cos(rotX) - z * Math.sin(rotX);
-    let z2 = y * Math.sin(rotX) + z * Math.cos(rotX);
-
-    return { x: x, y: y2, z: z2 };
-  }
-
   spawnPacket() {
-    if (this.packets.length > 15) return; // Limit active packets
+    if (this.packets.length > 50) return; // Increased limit for more activity
     
     // Find a random start node that has connections
     let startIdx = Math.floor(Math.random() * this.nodes.length);
@@ -444,90 +494,228 @@ class LightningNetworkCanvas {
     // Generate a random path
     const path = [startIdx];
     let current = startIdx;
-    const length = 3 + Math.floor(Math.random() * 5);
+    const minLength = 4; // At least 3 hops (A->B->C->D)
+    const targetLength = 4 + Math.floor(Math.random() * 8); // Longer paths
     
-    for(let i=0; i<length; i++) {
+    for(let i=0; i<targetLength; i++) {
       const neighbors = this.nodes[current].connections;
       if (neighbors.length === 0) break;
-      const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+      
+      // Try to find a neighbor not already in path to avoid loops
+      let validNeighbors = neighbors.filter(n => !path.includes(n));
+      if (validNeighbors.length === 0) validNeighbors = neighbors; // Fallback
+      
+      // Prefer hubs for next hop to simulate routing
+      // Weight neighbors: Super Hubs > Hubs > Nodes
+      let weightedNeighbors = [];
+      validNeighbors.forEach(nIdx => {
+          const n = this.nodes[nIdx];
+          let weight = 1;
+          if (n.type === 'super_hub') weight = 20; // Heavily prefer super hubs
+          else if (n.type === 'hub') weight = 5;
+          
+          for(let k=0; k<weight; k++) weightedNeighbors.push(nIdx);
+      });
+      
+      const next = weightedNeighbors[Math.floor(Math.random() * weightedNeighbors.length)];
       path.push(next);
       current = next;
     }
 
-    if (path.length > 1) {
+    if (path.length >= minLength) {
+      // Unique bright neon color for each packet
+      const hue = Math.floor(Math.random() * 360);
+      const color = `hsl(${hue}, 100%, 60%)`;
+      
       this.packets.push({
         path: path,
         segment: 0,
         progress: 0,
-        speed: 0.005 + Math.random() * 0.01, // Slower animation (was 0.03)
-        color: Math.random() > 0.5 ? this.themeColors.payment : this.themeColors.paymentAlt
+        speed: 0.008 + Math.random() * 0.008, // Slightly slower to see the relay
+        color: color,
+        size: 1.5 + Math.random() * 1.5, // Thinner
+        trail: [] // Add trail array
       });
+    }
+  }
+
+  drawGrid() {
+    const gridSize = 50;
+    const time = Date.now() * 0.001;
+    
+    this.ctx.save();
+    this.ctx.strokeStyle = this.isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
+    this.ctx.lineWidth = 1;
+    
+    // Moving grid
+    const offsetX = (time * 10) % gridSize;
+    const offsetY = (time * 10) % gridSize;
+    
+    this.ctx.beginPath();
+    for (let x = offsetX; x < this.width; x += gridSize) {
+        this.ctx.moveTo(x, 0);
+        this.ctx.lineTo(x, this.height);
+    }
+    for (let y = offsetY; y < this.height; y += gridSize) {
+        this.ctx.moveTo(0, y);
+        this.ctx.lineTo(this.width, y);
+    }
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  drawHexagon(x, y, radius, fill = true) {
+    this.ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const hx = x + radius * Math.cos(angle);
+      const hy = y + radius * Math.sin(angle);
+      if (i === 0) this.ctx.moveTo(hx, hy);
+      else this.ctx.lineTo(hx, hy);
+    }
+    this.ctx.closePath();
+    if (fill) this.ctx.fill();
+    else this.ctx.stroke();
+  }
+
+  updateTopology() {
+    // Randomly add/remove connections to simulate network churn
+    if (Math.random() > 0.05) return; // Low probability per frame
+
+    // 1. Shutdown a connection (Remove)
+    // Find a stable connection to close
+    const stableConns = this.connections.filter(c => c.state === 'stable');
+    if (stableConns.length > 0 && Math.random() > 0.5) {
+        const conn = stableConns[Math.floor(Math.random() * stableConns.length)];
+        conn.state = 'closing';
+        
+        // Remove from nodes' connection lists immediately so packets don't route through it
+        const nodeA = this.nodes[conn.a];
+        const nodeB = this.nodes[conn.b];
+        
+        nodeA.connections = nodeA.connections.filter(id => id !== conn.b);
+        nodeB.connections = nodeB.connections.filter(id => id !== conn.a);
+    }
+
+    // 2. Construct a connection (Add)
+    // Pick a random node
+    const idxA = Math.floor(Math.random() * this.nodes.length);
+    const nodeA = this.nodes[idxA];
+    
+    // Find a close neighbor not connected
+    const connectionDistance = Math.min(this.width, this.height) * 0.2;
+    
+    for (let i = 0; i < 10; i++) { // Try 10 times
+        const idxB = Math.floor(Math.random() * this.nodes.length);
+        if (idxA === idxB) continue;
+        if (nodeA.connections.includes(idxB)) continue;
+        
+        const nodeB = this.nodes[idxB];
+        const dx = nodeA.currentX - nodeB.currentX;
+        const dy = nodeA.currentY - nodeB.currentY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < connectionDistance) {
+            this.connections.push({ a: idxA, b: idxB, state: 'new', opacity: 0 });
+            nodeA.connections.push(idxB);
+            nodeB.connections.push(idxA);
+            break;
+        }
     }
   }
 
   animate() {
     this.ctx.clearRect(0, 0, this.width, this.height);
     
+    // Dynamic Topology Updates
+    this.updateTopology();
+    
     // Expansion Effect (Intro)
-    // Smoothly interpolate introProgress from 0 to 1
-    this.introProgress += (1 - this.introProgress) * 0.03;
+    this.introProgress += (1 - this.introProgress) * 0.05; // Faster intro
     
-    // Update Rotation
-    if (this.isHovering) {
-      this.targetRotation.x = -this.mouse.y * 1.5;
-      this.targetRotation.y = this.mouse.x * 1.5;
-    } else {
-      this.targetRotation.x = 0;
-      this.targetRotation.y += 0.0015; // Slightly faster auto rotate
-    }
-    
-    // Smooth rotation
-    this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.05;
-    this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.05;
-
-    // Update and Project Nodes
-    const projectedNodes = [];
-    this.nodes.forEach((node, i) => {
-      // Pulse effect
-      node.pulse += 0.05;
-      
-      // Apply expansion
-      node.x = node.targetX * this.introProgress;
-      node.y = node.targetY * this.introProgress;
-      node.z = node.targetZ * this.introProgress;
-      
-      // Rotate
-      const rotated = this.rotatePoint(node, this.rotation.x, this.rotation.y);
-      const proj = this.project(rotated);
-      
-      projectedNodes[i] = { ...proj, z: rotated.z, original: node };
+    // Update Nodes (Static)
+    this.nodes.forEach(node => {
+        node.pulse += 0.05;
+        if (node.flash > 0.01) node.flash *= 0.9;
+        
+        // No Drift - Static Positions
+        
+        // Interpolate for intro expansion
+        node.currentX = node.startX + (node.targetX - node.startX) * this.introProgress;
+        node.currentY = node.startY + (node.targetY - node.startY) * this.introProgress;
     });
 
+    // Draw Background Grid (Geek Effect)
+    this.drawGrid();
+
     // Draw Connections
-    this.ctx.lineWidth = this.isDarkMode ? 1.2 : 1.5; // Thicker lines
+    this.ctx.lineWidth = this.isDarkMode ? 1 : 1.5;
+    
+    // Calculate center for boundary fade
+    const centerX = this.width / 2;
+    const centerY = this.height / 2;
+    const maxRadius = Math.max(this.width, this.height) * 0.8; // Much wider fade
+
+    // Clean up closed connections
+    this.connections = this.connections.filter(c => c.opacity > 0 || c.state !== 'closing');
+
     this.connections.forEach(conn => {
-      const p1 = projectedNodes[conn.a];
-      const p2 = projectedNodes[conn.b];
+      // Update opacity based on state
+      if (conn.state === 'new') {
+          conn.opacity += 0.02;
+          if (conn.opacity >= 1) { conn.opacity = 1; conn.state = 'stable'; }
+      } else if (conn.state === 'closing') {
+          conn.opacity -= 0.02;
+      }
+
+      const p1 = this.nodes[conn.a];
+      const p2 = this.nodes[conn.b];
       
-      if (p1.visible && p2.visible && p1.z < 800 && p2.z < 800) { // Depth culling
-        const avgZ = (p1.z + p2.z) / 2;
-        // Calculate opacity based on depth and intro progress
-        let alpha = Math.max(0, (1 - (avgZ + 600) / 1200));
-        alpha *= this.introProgress; // Fade in with expansion
-        
-        if (alpha > 0.05) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(p1.x, p1.y);
-            this.ctx.lineTo(p2.x, p2.y);
-            
-            if (this.isDarkMode) {
-                this.ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.5})`;
-            } else {
-                // Much darker, stronger lines in light mode
-                this.ctx.strokeStyle = `rgba(20, 40, 100, ${alpha * 0.6})`;
-            }
-            this.ctx.stroke();
-        }
+      // Distance fade (existing logic)
+      const dx = p1.currentX - p2.currentX;
+      const dy = p1.currentY - p2.currentY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const maxDist = Math.min(this.width, this.height) * 0.3; // Increased range
+      
+      let alpha = Math.max(0.05, 1 - dist / maxDist); // Always keep a faint line
+      alpha *= this.introProgress;
+      
+      // Boundary Fade Out
+      const midX = (p1.currentX + p2.currentX) / 2;
+      const midY = (p1.currentY + p2.currentY) / 2;
+      const distFromCenter = Math.sqrt(Math.pow(midX - centerX, 2) + Math.pow(midY - centerY, 2));
+      const boundaryAlpha = Math.max(0, 1 - Math.pow(distFromCenter / maxRadius, 3)); // Cubic falloff
+      
+      alpha *= boundaryAlpha;
+      
+      // Lifecycle opacity
+      alpha *= conn.opacity;
+
+      if (alpha > 0.01) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(p1.currentX, p1.currentY);
+          this.ctx.lineTo(p2.currentX, p2.currentY);
+          
+          if (conn.state === 'new') {
+             this.ctx.strokeStyle = this.isDarkMode ? '#00FF00' : '#00AA00'; // Green for new
+             this.ctx.lineWidth = 2;
+             this.ctx.globalAlpha = conn.opacity;
+          } else if (conn.state === 'closing') {
+             this.ctx.strokeStyle = this.isDarkMode ? '#FF0000' : '#AA0000'; // Red for closing
+             this.ctx.lineWidth = 2;
+             this.ctx.globalAlpha = conn.opacity;
+          } else {
+             if (this.isDarkMode) {
+                 this.ctx.strokeStyle = `rgba(80, 80, 100, ${alpha * 0.4})`;
+             } else {
+                 this.ctx.strokeStyle = `rgba(100, 100, 120, ${alpha * 0.3})`; // Subtle in light mode
+             }
+             this.ctx.lineWidth = this.isDarkMode ? 1 : 1.5;
+             this.ctx.globalAlpha = 1; // Alpha handled in strokeStyle
+          }
+          
+          this.ctx.stroke();
+          this.ctx.globalAlpha = 1; // Reset
       }
     });
 
@@ -538,22 +726,28 @@ class LightningNetworkCanvas {
         
         this.ctx.beginPath();
         this.ctx.strokeStyle = pkt.color;
-        this.ctx.lineWidth = this.isDarkMode ? 2 : 3; // Thicker path
+        this.ctx.lineWidth = 2; // Visible path
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
-        // Fade out path based on packet progress to simulate tail or just keep it steady
-        this.ctx.globalAlpha = this.isDarkMode ? 0.3 : 0.4; 
+        
+        // Apply boundary fade to path as well
+        const pStart = this.nodes[pkt.path[0]];
+        const distFromCenter = Math.sqrt(Math.pow(pStart.currentX - centerX, 2) + Math.pow(pStart.currentY - centerY, 2));
+        const boundaryAlpha = Math.max(0, 1 - Math.pow(distFromCenter / maxRadius, 3));
+        
+        this.ctx.globalAlpha = (this.isDarkMode ? 0.4 : 0.5) * boundaryAlpha; // Clearly visible
 
-        let started = false;
+        // Draw the full path
         for (let i = 0; i < pkt.path.length - 1; i++) {
             const idxA = pkt.path[i];
             const idxB = pkt.path[i+1];
-            const pA = projectedNodes[idxA];
-            const pB = projectedNodes[idxB];
-
-            if (pA.visible && pB.visible && pA.z < 800 && pB.z < 800) {
-                this.ctx.moveTo(pA.x, pA.y);
-                this.ctx.lineTo(pB.x, pB.y);
+            const pA = this.nodes[idxA];
+            const pB = this.nodes[idxB];
+            
+            // Only draw if fully expanded (to avoid messy lines during intro)
+            if (this.introProgress > 0.8) {
+                this.ctx.moveTo(pA.currentX, pA.currentY);
+                this.ctx.lineTo(pB.currentX, pB.currentY);
             }
         }
         this.ctx.stroke();
@@ -561,36 +755,56 @@ class LightningNetworkCanvas {
     this.ctx.restore();
 
     // Draw Nodes
-    projectedNodes.forEach(p => {
-      if (p.visible) {
-        const alpha = Math.max(0, (1 - (p.z + 600) / 1200)) * this.introProgress;
-        if (alpha <= 0) return;
+    this.nodes.forEach(p => {
+        const size = p.size * (1 + Math.sin(p.pulse) * 0.1) * this.introProgress;
+        if (size <= 0) return;
+        
+        // Boundary Fade for nodes
+        const distFromCenter = Math.sqrt(Math.pow(p.currentX - centerX, 2) + Math.pow(p.currentY - centerY, 2));
+        const boundaryAlpha = Math.max(0, 1 - Math.pow(distFromCenter / maxRadius, 3));
+        
+        if (boundaryAlpha <= 0.01) return;
 
-        const size = p.original.size * p.scale * (1 + Math.sin(p.original.pulse) * 0.2);
-        
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-        
-        if (p.original.type === 'hub') {
+        // Geek Style: Hexagons instead of circles
+        const currentSize = size + (p.flash * 6);
+
+        if (p.type === 'super_hub' || p.type === 'hub') {
             this.ctx.fillStyle = this.themeColors.nodeHub;
         } else {
             this.ctx.fillStyle = this.themeColors.nodeRegular;
         }
         
-        this.ctx.globalAlpha = alpha;
-        this.ctx.fill();
-        
-        // Geeky: Add a ring around hubs
-        if (p.original.type === 'hub') {
-          this.ctx.beginPath();
-          this.ctx.arc(p.x, p.y, size * 1.8, 0, Math.PI * 2);
-          this.ctx.strokeStyle = this.themeColors.nodeHub;
-          this.ctx.lineWidth = 1;
-          this.ctx.stroke();
+        // Flash makes it brighter/white
+        if (p.flash > 0.1) {
+            this.ctx.fillStyle = this.isDarkMode ? '#FFFFFF' : '#000000';
         }
         
-        this.ctx.globalAlpha = 1;
-      }
+        this.ctx.globalAlpha = Math.min(1, (0.8 + p.flash) * this.introProgress * boundaryAlpha);
+        
+        // Draw Shape
+        if (p.type === 'super_hub') {
+             this.ctx.beginPath();
+             this.ctx.arc(p.currentX, p.currentY, currentSize, 0, Math.PI * 2);
+             this.ctx.fill();
+        } else {
+             this.drawHexagon(p.currentX, p.currentY, currentSize);
+        }
+        
+        // Tech rings for hubs
+        if (p.type === 'super_hub') {
+           this.ctx.strokeStyle = this.themeColors.nodeHub;
+           this.ctx.lineWidth = 1;
+           this.ctx.globalAlpha = 0.3 * this.introProgress * boundaryAlpha;
+           
+           // Rotating outer ring
+           this.ctx.save();
+           this.ctx.translate(p.currentX, p.currentY);
+           this.ctx.rotate(Date.now() * 0.001);
+           this.ctx.beginPath();
+           this.ctx.arc(0, 0, size * 2.0, 0, Math.PI * 1.5); // Broken ring
+           this.ctx.stroke();
+           this.ctx.restore();
+        }
     });
 
     // Draw Packets
@@ -601,6 +815,13 @@ class LightningNetworkCanvas {
       
       if (pkt.progress >= 1) {
         pkt.progress = 0;
+        
+        // Trigger flash
+        const reachedNodeIdx = pkt.path[pkt.segment + 1];
+        if (this.nodes[reachedNodeIdx]) {
+            this.nodes[reachedNodeIdx].flash = 1.0;
+        }
+
         pkt.segment++;
         if (pkt.segment >= pkt.path.length - 1) {
           this.packets.splice(i, 1);
@@ -610,41 +831,49 @@ class LightningNetworkCanvas {
 
       const idxA = pkt.path[pkt.segment];
       const idxB = pkt.path[pkt.segment + 1];
-      const pA = projectedNodes[idxA];
-      const pB = projectedNodes[idxB];
+      const pA = this.nodes[idxA];
+      const pB = this.nodes[idxB];
 
-      if (pA.visible && pB.visible) {
-        const x = pA.x + (pB.x - pA.x) * pkt.progress;
-        const y = pA.y + (pB.y - pA.y) * pkt.progress;
-        const scale = pA.scale + (pB.scale - pA.scale) * pkt.progress;
-        
-        // Glow effect for both modes
-        this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = pkt.color;
-        
-        // Outer glow/halo for light mode to make it visible
-        if (!this.isDarkMode) {
-            this.ctx.save();
-            this.ctx.globalAlpha = 0.3;
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 8 * scale, 0, Math.PI * 2);
-            this.ctx.fillStyle = pkt.color;
-            this.ctx.fill();
-            this.ctx.restore();
-        }
+      const x = pA.currentX + (pB.currentX - pA.currentX) * pkt.progress;
+      const y = pA.currentY + (pB.currentY - pA.currentY) * pkt.progress;
+      
+      // Add to trail
+      pkt.trail.push({x, y, age: 1.0});
+      if (pkt.trail.length > 15) pkt.trail.shift();
 
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
-        this.ctx.fillStyle = pkt.color;
-        this.ctx.fill();
-        
-        this.ctx.shadowBlur = 0;
+      // Draw Trail
+      if (pkt.trail.length > 1) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(pkt.trail[0].x, pkt.trail[0].y);
+          for (let t = 1; t < pkt.trail.length; t++) {
+              this.ctx.lineTo(pkt.trail[t].x, pkt.trail[t].y);
+          }
+          this.ctx.strokeStyle = pkt.color;
+          this.ctx.lineWidth = pkt.size * 0.8;
+          this.ctx.globalAlpha = 0.6;
+          this.ctx.stroke();
+          
+          // Decay trail
+          pkt.trail.forEach(t => t.age -= 0.05);
       }
+
+      // Glow effect
+      this.ctx.shadowBlur = 20;
+      this.ctx.shadowColor = pkt.color;
+      
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, pkt.size, 0, Math.PI * 2);
+      this.ctx.fillStyle = pkt.color;
+      this.ctx.globalAlpha = 1;
+      this.ctx.fill();
+      
+      this.ctx.shadowBlur = 0;
     }
     this.ctx.globalCompositeOperation = 'source-over';
 
     // Randomly spawn packets
-    if (Math.random() > 0.92) this.spawnPacket();
+    // Increased spawn rate
+    if (Math.random() > 0.7) this.spawnPacket();
 
     requestAnimationFrame(this.animate);
   }
@@ -655,12 +884,11 @@ class LightningNetworkCanvas {
     const tpsEl = document.getElementById("tps-count");
     if (!nodeEl || !chEl || !tpsEl) return;
 
-    // Fake stats that look realistic based on the visual
-    const targetNodes = this.nodes.length * 12; 
-    const targetChannels = this.connections.length * 8;
-    const targetTps = Math.floor(this.packets.length * 150 + Math.random() * 50);
+    // Fake stats
+    const targetNodes = this.nodes.length * 15; 
+    const targetChannels = this.connections.length * 10;
+    const targetTps = Math.floor(this.packets.length * 200 + Math.random() * 50);
 
-    // Smooth interpolation
     this.displayStats.nodes += (targetNodes - this.displayStats.nodes) * 0.1;
     this.displayStats.channels += (targetChannels - this.displayStats.channels) * 0.1;
     this.displayStats.tps += (targetTps - this.displayStats.tps) * 0.2;
@@ -687,10 +915,10 @@ class LightningNetworkCanvas {
     } else {
       // Light mode: Darker, technical colors for better visibility
       return {
-        nodeHub: '#0044CC',      // Stronger Blue
-        nodeRegular: '#444444',  // Darker Grey
-        payment: '#FF4400',      // Intense Orange
-        paymentAlt: '#009977'    // Darker Teal
+        nodeHub: '#0055FF',      
+        nodeRegular: '#666666',  
+        payment: '#FF5500',      
+        paymentAlt: '#00AA88'    
       };
     }
   }
