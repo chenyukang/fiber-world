@@ -299,22 +299,6 @@ class LightningNetworkCanvas {
     // Stats
     this.displayStats = { nodes: 0, channels: 0, tps: 0 };
 
-    // World Map Data (Simplified Continents)
-    this.mapPolygons = [
-        // North America
-        [[0.1, 0.1], [0.3, 0.05], [0.45, 0.05], [0.4, 0.3], [0.25, 0.45], [0.15, 0.35], [0.05, 0.2]],
-        // South America
-        [[0.28, 0.5], [0.4, 0.48], [0.45, 0.6], [0.38, 0.85], [0.3, 0.75], [0.25, 0.6]],
-        // Europe
-        [[0.45, 0.15], [0.55, 0.1], [0.6, 0.2], [0.55, 0.28], [0.48, 0.25]],
-        // Africa
-        [[0.45, 0.35], [0.6, 0.35], [0.65, 0.55], [0.55, 0.75], [0.45, 0.55]],
-        // Asia
-        [[0.62, 0.1], [0.9, 0.1], [0.95, 0.4], [0.8, 0.55], [0.65, 0.45], [0.6, 0.25]],
-        // Australia
-        [[0.75, 0.65], [0.9, 0.65], [0.9, 0.8], [0.75, 0.75]]
-    ];
-
     this.resize();
     window.addEventListener("resize", () => this.resize());
     this.bindInteraction();
@@ -362,29 +346,23 @@ class LightningNetworkCanvas {
     const isMobile = window.innerWidth < 768;
     const nodeCount = isMobile ? 100 : 300; 
     
-    // Continent Centers for Hubs (approximate)
-    const continentCenters = [
-        {x: 0.25, y: 0.25, name: "NA"}, // North America
-        {x: 0.35, y: 0.65, name: "SA"}, // South America
-        {x: 0.52, y: 0.2, name: "EU"},  // Europe
-        {x: 0.55, y: 0.55, name: "AF"}, // Africa
-        {x: 0.75, y: 0.3, name: "AS"},  // Asia
-        {x: 0.82, y: 0.7, name: "AU"}   // Australia
-    ];
-
-    // Create Super Hubs at continent centers
+    // Create Clusters/Hubs
+    const hubCount = isMobile ? 3 : 6;
     const hubs = [];
-    continentCenters.forEach((center, i) => {
-        // Add some randomness to exact position
-        const hx = (center.x * this.width) + (Math.random() - 0.5) * (this.width * 0.05);
-        const hy = (center.y * this.height) + (Math.random() - 0.5) * (this.height * 0.05);
-        
+    
+    // Define margins to keep hubs somewhat central but spread out
+    const marginX = this.width * 0.2; 
+    const marginY = this.height * 0.2;
+    const safeWidth = this.width - marginX * 2;
+    const safeHeight = this.height - marginY * 2;
+
+    for (let i = 0; i < hubCount; i++) {
         hubs.push({
-            x: hx,
-            y: hy,
+            x: marginX + Math.random() * safeWidth,
+            y: marginY + Math.random() * safeHeight,
             id: i
         });
-    });
+    }
 
     // Create Nodes
     for (let i = 0; i < nodeCount; i++) {
@@ -401,25 +379,33 @@ class LightningNetworkCanvas {
       } else if (rand > 0.90) {
           type = 'hub';
           size = isMobile ? 5 : 7;
-          // Place hubs near continent centers
-          const continent = continentCenters[Math.floor(Math.random() * continentCenters.length)];
-          const dist = Math.random() * (Math.min(this.width, this.height) * 0.15);
+          // Random position but biased towards center
           const angle = Math.random() * Math.PI * 2;
-          x = (continent.x * this.width) + Math.cos(angle) * dist;
-          y = (continent.y * this.height) + Math.sin(angle) * dist;
+          const dist = Math.random() * (Math.min(this.width, this.height) * 0.35);
+          x = (this.width / 2) + Math.cos(angle) * dist;
+          y = (this.height / 2) + Math.sin(angle) * dist;
       } else {
           type = 'node';
           size = isMobile ? 2 : 3;
-          // Place nodes distributed across continents
-          const continent = continentCenters[Math.floor(Math.random() * continentCenters.length)];
-          // Wider distribution for leaf nodes
-          const dist = Math.random() * (Math.min(this.width, this.height) * 0.25);
+          // Cluster around a random hub
+          const hub = hubs[Math.floor(Math.random() * hubs.length)];
           const angle = Math.random() * Math.PI * 2;
-          x = (continent.x * this.width) + Math.cos(angle) * dist;
-          y = (continent.y * this.height) + Math.sin(angle) * dist;
+          // Gaussian-ish distribution
+          const dist = (Math.random() + Math.random()) * (Math.min(this.width, this.height) * 0.20); // Tighter clusters
+          x = hub.x + Math.cos(angle) * dist;
+          y = hub.y + Math.sin(angle) * dist;
       }
 
       // Soft bounds check
+      // If out of bounds, move towards center instead of clamping
+      if (x < 20 || x > this.width - 20 || y < 20 || y > this.height - 20) {
+          const angle = Math.atan2(this.height/2 - y, this.width/2 - x);
+          const dist = Math.random() * 50;
+          x += Math.cos(angle) * dist * 2;
+          y += Math.sin(angle) * dist * 2;
+      }
+      
+      // Final safety clamp
       x = Math.max(20, Math.min(this.width - 20, x));
       y = Math.max(20, Math.min(this.height - 20, y));
 
@@ -542,33 +528,12 @@ class LightningNetworkCanvas {
     }
   }
 
-  drawWorldMap() {
-    this.ctx.save();
-    this.ctx.strokeStyle = this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    this.ctx.fillStyle = this.isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)';
-    this.ctx.lineWidth = 1;
-
-    this.mapPolygons.forEach(poly => {
-        this.ctx.beginPath();
-        poly.forEach((pt, i) => {
-            const x = pt[0] * this.width;
-            const y = pt[1] * this.height;
-            if (i === 0) this.ctx.moveTo(x, y);
-            else this.ctx.lineTo(x, y);
-        });
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.stroke();
-    });
-    this.ctx.restore();
-  }
-
   drawGrid() {
-    const gridSize = 50;
+    const gridSize = 40; // Match CSS grid size
     const time = Date.now() * 0.001;
     
     this.ctx.save();
-    this.ctx.strokeStyle = this.isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
+    this.ctx.strokeStyle = this.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'; // Slightly more visible
     this.ctx.lineWidth = 1;
     
     // Moving grid
@@ -670,7 +635,6 @@ class LightningNetworkCanvas {
     });
 
     // Draw Background Grid (Geek Effect)
-    this.drawWorldMap();
     this.drawGrid();
 
     // Draw Connections
