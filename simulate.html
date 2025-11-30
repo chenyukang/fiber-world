@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Network Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000510; /* Ultra Dark Dark */
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #0f172a 0%, #000000 100%);
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats-card {
+            background: rgba(0, 5, 16, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+            min-width: 280px;
+        }
+
+        .stat-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+
+        .stat-item:last-child { border-bottom: none; }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .stat-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #38bdf8;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+            background: rgba(0, 5, 16, 0.85);
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            align-items: center;
+        }
+
+        button {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: rgba(56, 189, 248, 0.3);
+            transform: translateY(-2px);
+            color: white;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+
+        /* Distinct styles for L1 actions */
+        button.l1-action {
+            border-color: #a855f7; /* Purple for L1 */
+            color: #d8b4fe;
+            background: rgba(168, 85, 247, 0.1);
+        }
+        button.l1-action:hover {
+            background: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        }
+
+        /* Distinct styles for Topology actions */
+        button.topo-action {
+            border-color: #2dd4bf; /* Teal */
+            color: #5eead4;
+            background: rgba(45, 212, 191, 0.1);
+        }
+        button.topo-action:hover {
+            background: rgba(45, 212, 191, 0.3);
+            box-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 5px currentColor; }
+
+        /* L1 Label */
+        .l1-label {
+            position: absolute;
+            bottom: 10px;
+            right: 20px; /* Aligned to the right */
+            font-family: 'Courier New', monospace;
+            color: #a855f7;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="networkCanvas"></canvas>
+
+        <div class="ui-overlay">
+            <div class="stats-card">
+                <h2 class="text-xl font-bold mb-4 text-white tracking-tight" style="text-shadow: 0 0 10px rgba(255,255,255,0.5);">FIBER NETWORK</h2>
+
+                <!-- Infrastructure -->
+                <div class="stat-item">
+                    <span class="stat-label">Nodes / Channels</span>
+                    <span class="stat-value"><span id="nodeCount">0</span> / <span id="channelCount">0</span></span>
+                </div>
+
+                <!-- KEY METRIC: L2 vs L1 Count -->
+                <div class="stat-item" style="border-bottom-color: rgba(56, 189, 248, 0.3);">
+                    <span class="stat-label text-blue-300">L2 Payments</span>
+                    <span class="stat-value" id="l2Count" style="color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);">0</span>
+                </div>
+                <div class="stat-item" style="border-bottom-color: rgba(168, 85, 247, 0.3);">
+                    <span class="stat-label text-purple-300">L1 Txs</span>
+                    <span class="stat-value" id="l1Count" style="color: #d8b4fe; text-shadow: 0 0 8px rgba(216, 180, 254, 0.5);">0</span>
+                </div>
+
+                <!-- Volume -->
+                <div class="stat-item">
+                    <span class="stat-label">Volume</span>
+                    <span class="stat-value" id="volume">0 CKB</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <!-- L1 Actions -->
+            <button class="l1-action" id="btnOpenChannel">
+                <span>⚡</span> Open
+            </button>
+            <button class="l1-action" id="btnCloseChannel">
+                <span>🔒</span> Close
+            </button>
+
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div>
+
+            <!-- Topology Actions -->
+            <button class="topo-action" id="btnNewPeer">
+                <span>➕</span> Peer Join
+            </button>
+            <button class="topo-action" id="btnPeerLeave">
+                <span>➖</span> Peer Leave
+            </button>
+
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div>
+
+            <!-- Traffic -->
+            <button id="btnAddTraffic">
+                <span>🌊</span> Surge
+            </button>
+        </div>
+
+        <div class="l1-label">CKB L1 Network</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        // --- SCENE TRANSLATION VARIABLES ---
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let wasDragging = false; // Flag to differentiate click from drag
+        // ------------------------------------
+
+        // Entities
+        let nodes = [];
+        let edges = [];
+        let packets = [];
+        let particles = [];
+        let transactions = []; // L1 Transactions
+        let blocks = []; // Visual blocks at bottom
+
+        // Statistics
+        let totalVolume = 0;
+        let tpsCounter = 0;
+        let totalL2TxCount = 0;
+        let totalL1TxCount = 0;
+
+        // Configuration
+        const NODE_COUNT = 30; // Initial count
+        const MAX_NODES = 50;
+        const MIN_NODES = 5;
+        const L1_HEIGHT = 60; // Bottom area for blockchain
+        // SPEED ADJUSTMENT: Slower speed for better visibility of hops
+        const PACKET_SPEED = 0.025;
+        const CLICK_TOLERANCE = 10; // Pixels distance to detect line click
+
+        // Node Types Configuration
+        const NODE_TYPES = {
+            HUB: { id: 'HUB', radius: 10, color: '#c084fc', glowColor: 'rgba(192, 132, 252, 0.6)', prob: 0.15, reach: 350 },
+            STD: { id: 'STD', radius: 6, color: '#0ea5e9', glowColor: 'rgba(14, 165, 233, 0.4)', prob: 0.45, reach: 200 },
+            LEAF: { id: 'LEAF', radius: 3.5, color: '#2dd4bf', glowColor: 'rgba(45, 212, 191, 0.2)', prob: 1.0, reach: 120 }
+        };
+
+        // Edge Colors (Simulating Capacity Types)
+        const EDGE_COLORS = [
+            'rgba(56, 189, 248, 0.3)', // Default Blue
+            'rgba(168, 85, 247, 0.3)', // Purple
+            'rgba(45, 212, 191, 0.3)', // Teal
+            'rgba(99, 102, 241, 0.3)'  // Indigo
+        ];
+        const EDGE_COLORS_CORE = [
+            'rgba(56, 189, 248, 0.6)',
+            'rgba(168, 85, 247, 0.6)',
+            'rgba(45, 212, 191, 0.6)',
+            'rgba(99, 102, 241, 0.6)'
+        ];
+
+        // Interaction
+        let selectedNodes = []; // Changed to array for multi-selection
+        let selectedEdge = null;
+        let mousePos = { x: 0, y: 0 };
+
+        // Global L1 Landing Spot (Screen Coords)
+        let L1_LANDING_X;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Define L1 landing X position (Screen coordinates: 75% across)
+            L1_LANDING_X = width * 0.75;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- Classes ---
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 2 + 0.5;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.02;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                // Apply translation offset
+                ctx.arc(this.x + offsetX, this.y + offsetY, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        class Transaction {
+            constructor(type, data) {
+                this.type = type; // 'open' or 'close'
+                this.data = data; // {nodeA, nodeB} or {edge}
+                this.finished = false;
+
+                // Start position (World Coords) - These are fixed
+                if (type === 'open') {
+                    this.startX = (data.nodeA.x + data.nodeB.x) / 2;
+                    this.startY = (data.nodeA.y + data.nodeB.y) / 2;
+                } else {
+                    this.startX = (data.edge.from.x + data.edge.to.x) / 2;
+                    this.startY = (data.edge.from.y + data.edge.to.y) / 2;
+                }
+
+                // Target position (Screen Coords) - Fixed L1 spot
+                this.targetX = L1_LANDING_X;
+                this.targetY = height - L1_HEIGHT/2;
+
+                this.progress = 0;
+                this.speed = 0.04;
+
+                // Current position (Screen Coords) - Calculated in update
+                this.x = this.startX + offsetX;
+                this.y = this.startY + offsetY;
+            }
+
+            update() {
+                if (this.progress < 1) {
+                    this.progress += this.speed;
+                    if (this.progress > 1) this.progress = 1;
+
+                    // Calculate current Screen Start Position (due to offset changes)
+                    const currentStartX = this.startX + offsetX;
+                    const currentStartY = this.startY + offsetY;
+
+                    // Interpolate position from current Screen Start to Target Screen Position
+                    this.x = currentStartX + (this.targetX - currentStartX) * this.progress;
+                    this.y = currentStartY + (this.targetY - currentStartY) * this.progress;
+
+                } else {
+                    this.finished = true;
+                    this.execute();
+                }
+            }
+
+            execute() {
+                // Trigger the actual network change
+                if (this.type === 'open') {
+                    // Create edge
+                    addEdge(this.data.nodeA, this.data.nodeB);
+
+                    // Flash effect at the L1 confirmation area (using final screen coords)
+                    createExplosion(this.x, this.y, '#0ea5e9');
+                } else if (this.type === 'close') {
+                    const idx = edges.indexOf(this.data.edge);
+                    if (idx > -1) {
+                        edges.splice(idx, 1);
+                        const { from, to } = this.data.edge;
+                        from.connections = from.connections.filter(n => n !== to);
+                        to.connections = to.connections.filter(n => n !== from);
+                    }
+
+                    // Flash effect at the L1 confirmation area (using final screen coords)
+                    createExplosion(this.x, this.y, '#ef4444');
+                }
+
+                totalL1TxCount++;
+                // Spawn the block exactly where the TX landed
+                blocks.push({ x: this.targetX, w: 40, h: 40, color: this.type === 'open' ? '#0ea5e9' : '#ef4444' });
+            }
+
+            draw() {
+                // Draw a box representing the TX
+                const drawX = this.x; // Already screen coords
+                const drawY = this.y;
+
+                ctx.fillStyle = '#a855f7'; // Purple for L1 interactions
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#a855f7';
+                ctx.fillRect(drawX - 6, drawY - 6, 12, 12);
+
+                // Label
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Arial';
+                ctx.fillText(this.type === 'open' ? 'FUND' : 'SETTLE', drawX + 10, drawY);
+
+                // Draw trailing line back to source (connects TX to the node midpoint)
+                ctx.beginPath();
+                ctx.moveTo(drawX, drawY);
+                const startXScreen = this.startX + offsetX;
+                const startYScreen = this.startY + offsetY;
+                ctx.lineTo(startXScreen, startYScreen);
+
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        class Node {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+
+                // Determine Type
+                const rand = Math.random();
+                if (rand < NODE_TYPES.HUB.prob) this.type = NODE_TYPES.HUB;
+                else if (rand < NODE_TYPES.HUB.prob + NODE_TYPES.STD.prob) this.type = NODE_TYPES.STD;
+                else this.type = NODE_TYPES.LEAF;
+
+                this.pulse = 0;
+                this.connections = [];
+            }
+
+            update() {
+                if (this.pulse > 0) this.pulse -= 0.05;
+                if (this.pulse < 0) this.pulse = 0;
+            }
+
+            draw() {
+                const isSelected = selectedNodes.includes(this);
+                const drawX = this.x + offsetX;
+                const drawY = this.y + offsetY;
+
+                const color = isSelected ? '#fbbf24' : this.type.color;
+                const radius = this.type.radius;
+
+                // Glow / Pulse
+                if (this.pulse > 0 || isSelected || this.type.id === 'HUB') {
+                    const glowStrength = isSelected ? 30 : (this.type.id === 'HUB' ? 20 : 15);
+                    const glowAlpha = isSelected ? (0.2 + this.pulse * 0.5) : (this.type.id === 'HUB' ? 0.3 : this.pulse * 0.5);
+
+                    ctx.shadowBlur = glowStrength;
+                    ctx.shadowColor = isSelected ? '#fbbf24' : this.type.glowColor;
+
+                    ctx.beginPath();
+                    ctx.arc(drawX, drawY, radius + (this.pulse * 8), 0, Math.PI * 2);
+                    ctx.fillStyle = isSelected
+                        ? `rgba(251, 191, 36, ${glowAlpha})`
+                        : (this.type.id === 'HUB' ? this.type.glowColor : `rgba(14, 165, 233, ${glowAlpha})`);
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = isSelected ? 15 : 0;
+                ctx.shadowColor = color;
+
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, radius + (isSelected ? 2 : 0), 0, Math.PI * 2);
+                ctx.fillStyle = isSelected ? '#fff' : color;
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Packet {
+            constructor(path) {
+                this.path = path;
+                this.currentIndex = 0;
+                this.progress = 0;
+                this.speed = PACKET_SPEED + (Math.random() * 0.01);
+                this.finished = false;
+                this.trail = [];
+                this.amount = Math.floor(Math.random() * 500) * 10 + 100;
+            }
+
+            update() {
+                this.progress += this.speed;
+                const startNode = this.path[this.currentIndex];
+                const endNode = this.path[this.currentIndex + 1];
+
+                if (!startNode || !endNode || !areConnected(startNode, endNode)) {
+                    this.finished = true;
+                    return;
+                }
+
+                const currentX = startNode.x + (endNode.x - startNode.x) * this.progress;
+                const currentY = startNode.y + (endNode.y - startNode.y) * this.progress;
+
+                this.trail.push({x: currentX, y: currentY, age: 1.0});
+                for(let t of this.trail) t.age -= 0.05;
+                this.trail = this.trail.filter(t => t.age > 0);
+
+                if (this.progress >= 1) {
+                    this.progress = 0;
+                    this.currentIndex++;
+                    this.path[this.currentIndex].pulse = 1.0;
+
+                    // Use translated coordinates for explosion
+                    createExplosion(endNode.x + offsetX, endNode.y + offsetY, '#fbbf24');
+
+                    if (this.currentIndex >= this.path.length - 1) {
+                        this.finished = true;
+                        totalL2TxCount++;
+                        totalVolume += this.amount;
+                    }
+                }
+            }
+
+            draw() {
+                if (this.finished || this.trail.length === 0) return;
+
+                // Apply translation to all trail points
+                ctx.beginPath();
+                ctx.moveTo(this.trail[0].x + offsetX, this.trail[0].y + offsetY);
+                for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x + offsetX, this.trail[i].y + offsetY);
+
+                ctx.lineCap = 'round';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = `rgba(251, 191, 36, 0.8)`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#fbbf24';
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Head
+                const head = this.trail[this.trail.length-1];
+                const headX = head.x + offsetX;
+                const headY = head.y + offsetY;
+
+                ctx.beginPath();
+                ctx.arc(headX, headY, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+
+                // Draw Amount Text
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillStyle = "#fbbf24";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 4;
+                ctx.fillText(this.amount + "", headX, headY - 10);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // --- Helpers ---
+
+        // NOTE: createExplosion is updated to take screen coordinates, not world coordinates.
+        function createExplosion(x, y, color) {
+            for(let k=0; k<8; k++) particles.push(new Particle(x - offsetX, y - offsetY, color));
+        }
+
+        function formatCapacity(cap) {
+            if (cap >= 1000000) return (cap / 1000000).toFixed(1) + "M";
+            if (cap >= 1000) return (cap / 1000).toFixed(0) + "K";
+            return cap;
+        }
+
+        // Distance from point p to line segment vw
+        function distToSegment(p, v, w) {
+            const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+            if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            const projX = v.x + t * (w.x - v.x);
+            const projY = v.y + t * (w.y - v.y);
+            return Math.hypot(p.x - projX, p.y - projY);
+        }
+
+        function initNetwork() {
+            nodes = [];
+            edges = [];
+            packets = [];
+            particles = [];
+            transactions = [];
+            blocks = [];
+            selectedNodes = [];
+            selectedEdge = null;
+
+            totalL2TxCount = 0;
+            totalL1TxCount = 0;
+            totalVolume = 0;
+
+            for (let i = 0; i < NODE_COUNT; i++) {
+                createInitialNode();
+            }
+            reconnectAll();
+        }
+
+        function createInitialNode() {
+            // Generate nodes within original bounds
+            const x = Math.random() * (width - 100) + 50;
+            const y = Math.random() * (height - L1_HEIGHT - 100) + 50;
+            const newNode = new Node(Date.now() + Math.random(), x, y);
+            nodes.push(newNode);
+        }
+
+        function reconnectAll() {
+            edges = [];
+            nodes.forEach(n => n.connections = []);
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                    const reachLimit = (nodes[i].type.reach + nodes[j].type.reach) / 1.8;
+                    if (dist < reachLimit) {
+                        addEdge(nodes[i], nodes[j]);
+                    }
+                }
+            }
+
+            nodes.forEach(n => {
+                if(n.connections.length === 0) {
+                    let closest = null, minD = Infinity;
+                    nodes.forEach(other => {
+                        if(n!==other) {
+                            const d = Math.hypot(n.x - other.x, n.y - other.y);
+                            if(d < minD) { minD = d; closest = other; }
+                        }
+                    });
+                    if(closest) addEdge(n, closest);
+                }
+            });
+        }
+
+        function addNode() {
+            const x = Math.random() * (width - 100) + 50;
+            const y = Math.random() * (height - L1_HEIGHT - 100) + 50;
+            const newNode = new Node(Date.now() + Math.random(), x, y);
+            newNode.pulse = 1.0;
+            nodes.push(newNode);
+
+            let closest = null;
+            let minD = Infinity;
+
+            for (let other of nodes) {
+                if (other === newNode) continue;
+                const dist = Math.hypot(newNode.x - other.x, newNode.y - other.y);
+                if (dist < minD) {
+                    minD = dist;
+                    closest = other;
+                }
+            }
+
+            if (closest) {
+                transactions.push(new Transaction('open', {nodeA: newNode, nodeB: closest}));
+            }
+        }
+
+        function removeNode() {
+            if (nodes.length <= MIN_NODES) return;
+
+            let idx = Math.floor(Math.random() * nodes.length);
+            let node = nodes[idx];
+
+            if (selectedNodes.includes(node)) return;
+
+            const connectedEdges = edges.filter(e => e.from === node || e.to === node);
+
+            connectedEdges.forEach(e => {
+                transactions.push(new Transaction('close', {edge: e}));
+            });
+
+            createExplosion(node.x + offsetX, node.y + offsetY, '#ef4444');
+
+            nodes.splice(idx, 1);
+
+            for(let e of connectedEdges) {
+                if (e === selectedEdge) selectedEdge = null;
+                const eIdx = edges.indexOf(e);
+                if(eIdx > -1) edges.splice(eIdx, 1);
+
+                const { from, to } = e;
+                if(from !== node) from.connections = from.connections.filter(c => c !== node);
+                if(to !== node) to.connections = to.connections.filter(c => c !== node);
+            }
+        }
+
+        function areConnected(a, b) {
+            if(!a || !b) return false;
+            // Check both directions
+            return a.connections.includes(b) && b.connections.includes(a);
+        }
+
+        // Helper to find edge object between two nodes
+        function findEdge(a, b) {
+             return edges.find(e =>
+                (e.from === a && e.to === b) || (e.from === b && e.to === a)
+            );
+        }
+
+        function addEdge(a, b) {
+            if (areConnected(a, b)) return;
+            const colorIdx = Math.floor(Math.random() * EDGE_COLORS.length);
+            const capacity = Math.floor(Math.random() * 4500000) + 500000;
+            edges.push({ from: a, to: b, colorIdx: colorIdx, capacity: capacity });
+            a.connections.push(b);
+            b.connections.push(a);
+        }
+
+        function findPath(start, end) {
+            let queue = [[start]];
+            let visited = new Set([start]);
+            while (queue.length > 0) {
+                let path = queue.shift();
+                let node = path[path.length - 1];
+                if (node === end) return path;
+                for (let neighbor of node.connections) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push([...path, neighbor]);
+                    }
+                }
+            }
+            return null;
+        }
+
+        function triggerRandomPayment() {
+            if (nodes.length < 2) return;
+            const start = nodes[Math.floor(Math.random() * nodes.length)];
+            let end = nodes[Math.floor(Math.random() * nodes.length)];
+            let tries = 0;
+            while ((end === start || !start || !end) && tries < 10) {
+                end = nodes[Math.floor(Math.random() * nodes.length)];
+                tries++;
+            }
+            if(start && end && start !== end) {
+                const path = findPath(start, end);
+                if (path && path.length > 1) packets.push(new Packet(path));
+            }
+        }
+
+        // --- L1 Logic ---
+
+        function handleOpenChannel() {
+            const [a, b] = selectedNodes;
+
+            // --- Logic 1: Handle Manual Selection (2 Nodes) ---
+            if (selectedNodes.length === 2) {
+                if (areConnected(a, b)) {
+                    // Already connected: Flash and trigger a payment demo
+                    createExplosion((a.x+b.x)/2 + offsetX, (a.y+b.y)/2 + offsetY, '#fbbf24');
+                    const path = findPath(a, b);
+                    if(path) packets.push(new Packet(path));
+                } else {
+                    // Not connected: Initiate funding transaction
+                    transactions.push(new Transaction('open', {nodeA: a, nodeB: b}));
+                }
+                return;
+            }
+
+            // --- Logic 2: Handle Random Fallback (0 or 1 Node Selected) ---
+
+            let attempts = 0;
+            // Use a higher attempt limit to ensure we find a valid pair
+            while(attempts < 100) {
+                // 1. Pick a random node (rA)
+                const rA = nodes[Math.floor(Math.random() * nodes.length)];
+                if (!rA) { attempts++; continue; }
+
+                let closestUnconnected = null;
+                let minD = Infinity;
+
+                // 2. Find the closest *unconnected* node (rB)
+                for (const rB of nodes) {
+                    if (rA === rB || areConnected(rA, rB)) continue;
+
+                    const dist = Math.hypot(rA.x - rB.x, rA.y - rB.y);
+
+                    // We removed the strict 'reachLimit' here to ensure we find *something* // even if nodes are far apart, since this is a fallback action button.
+                    if (dist < minD) {
+                        minD = dist;
+                        closestUnconnected = rB;
+                    }
+                }
+
+                if (closestUnconnected) {
+                    transactions.push(new Transaction('open', {nodeA: rA, nodeB: closestUnconnected}));
+                    return; // Success, exit function
+                }
+                attempts++;
+            }
+            console.log("Could not find any unconnected pair after multiple attempts.");
+        }
+
+        function handleCloseChannel() {
+            // --- Logic 1: Handle Selected Edge ---
+            if (selectedEdge) {
+                transactions.push(new Transaction('close', {edge: selectedEdge}));
+                selectedEdge = null;
+                return;
+            }
+
+            // --- Logic 2: Handle Random Fallback (No Edge Selected) ---
+            if (edges.length === 0) return;
+
+            // Randomly select one edge to close
+            const edge = edges[Math.floor(Math.random() * edges.length)];
+            transactions.push(new Transaction('close', {edge: edge}));
+        }
+
+        // --- Main Loop ---
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Draw Blockchain Area (NOT translated)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            ctx.fillRect(0, height - L1_HEIGHT, width, L1_HEIGHT);
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(0, height - L1_HEIGHT);
+            ctx.lineTo(width, height - L1_HEIGHT);
+            ctx.stroke();
+
+            // Draw Blocks moving
+            for(let i = blocks.length - 1; i >= 0; i--) {
+                let b = blocks[i];
+                b.x -= 1; // scroll left
+
+                ctx.fillStyle = b.color;
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(b.x, height - L1_HEIGHT + 10, b.w, b.h);
+                ctx.globalAlpha = 1.0;
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.strokeRect(b.x, height - L1_HEIGHT + 10, b.w, b.h);
+
+                if(b.x < -50) blocks.splice(i, 1);
+            }
+
+            // 2. Draw Edges (Colored)
+            ctx.lineWidth = 3;
+            for (let edge of edges) {
+                const fromX = edge.from.x + offsetX;
+                const fromY = edge.from.y + offsetY;
+                const toX = edge.to.x + offsetX;
+                const toY = edge.to.y + offsetY;
+
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+                const color = EDGE_COLORS[edge.colorIdx] || EDGE_COLORS[0];
+                const grad = ctx.createLinearGradient(fromX, fromY, toX, toY);
+
+                if (edge === selectedEdge) {
+                    grad.addColorStop(0, '#ffffff');
+                    grad.addColorStop(0.5, '#ffffff');
+                    grad.addColorStop(1, '#ffffff');
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 15;
+                } else {
+                    grad.addColorStop(0, color);
+                    grad.addColorStop(0.5, color.replace('0.3', '0.5'));
+                    grad.addColorStop(1, color);
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.strokeStyle = grad;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+
+            // Core & Text
+            ctx.lineWidth = 1;
+            ctx.font = "10px sans-serif";
+            ctx.textAlign = "center";
+            for (let edge of edges) {
+                const isSelected = (edge === selectedEdge);
+                const fromX = edge.from.x + offsetX;
+                const fromY = edge.from.y + offsetY;
+                const toX = edge.to.x + offsetX;
+                const toY = edge.to.y + offsetY;
+
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                ctx.lineTo(toX, toY);
+
+                const color = EDGE_COLORS_CORE[edge.colorIdx] || EDGE_COLORS_CORE[0];
+                ctx.strokeStyle = isSelected ? '#ffffff' : color;
+                ctx.stroke();
+
+                const midX = (fromX + toX) / 2;
+                const midY = (fromY + toY) / 2;
+                ctx.fillStyle = isSelected ? "#ffffff" : "rgba(148, 163, 184, 0.7)";
+                ctx.fillText(formatCapacity(edge.capacity), midX, midY - 5);
+            }
+
+            // 3. Transactions
+            for (let i = transactions.length - 1; i >= 0; i--) {
+                transactions[i].update();
+                transactions[i].draw();
+                if (transactions[i].finished) transactions.splice(i, 1);
+            }
+
+            // 4. Packets
+            for (let i = packets.length - 1; i >= 0; i--) {
+                packets[i].update();
+                packets[i].draw();
+                if (packets[i].finished) packets.splice(i, 1);
+            }
+
+            // 5. Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+
+            // 6. Nodes
+            for (let node of nodes) {
+                node.update();
+                node.draw();
+            }
+
+            // UI: Selected Node Lines (Optional visual guide)
+            if (selectedNodes.length === 1) {
+                // Draw dotted line to mouse
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]);
+                ctx.moveTo(selectedNodes[0].x + offsetX, selectedNodes[0].y + offsetY);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+                ctx.stroke();
+                ctx.setLineDash([]);
+            } else if (selectedNodes.length === 2) {
+                // Draw connection preview between selected
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]);
+                ctx.moveTo(selectedNodes[0].x + offsetX, selectedNodes[0].y + offsetY);
+                ctx.lineTo(selectedNodes[1].x + offsetX, selectedNodes[1].y + offsetY);
+                const connected = areConnected(selectedNodes[0], selectedNodes[1]);
+                ctx.strokeStyle = connected ? 'rgba(239, 68, 68, 0.5)' : 'rgba(34, 197, 94, 0.5)';
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Update stats
+            document.getElementById('nodeCount').innerText = nodes.length;
+            document.getElementById('channelCount').innerText = edges.length;
+            document.getElementById('l2Count').innerText = totalL2TxCount.toLocaleString();
+            document.getElementById('l1Count').innerText = totalL1TxCount.toLocaleString();
+
+            requestAnimationFrame(animate);
+        }
+
+        setInterval(() => { if (Math.random() > 0.4) triggerRandomPayment(); }, 400);
+        setInterval(() => {
+            document.getElementById('volume').innerText = totalVolume.toLocaleString() + " CKB";
+        }, 500);
+
+        // --- Dragging / Panning Logic ---
+
+        canvas.addEventListener('mousedown', (e) => {
+            // Only respond to left click (button 0)
+            if (e.button !== 0) return;
+
+            isDragging = true;
+            wasDragging = false; // Reset drag flag
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+
+            // Prevent text selection during drag
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // Store mouse screen position for UI line drawing
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+
+            if (isDragging) {
+                const dx = e.clientX - lastMouseX;
+                const dy = e.clientY - lastMouseY;
+
+                // Move scene offset
+                offsetX += dx;
+                offsetY += dy;
+
+                // Check if motion was significant enough to be considered a drag
+                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                    wasDragging = true;
+                }
+
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                document.body.style.cursor = 'grabbing';
+            } else {
+                // Non-dragging mouse move logic for cursor change
+                let hovering = false;
+                // Calculate compensated mouse position (World Coordinates)
+                const mouseWorldX = mousePos.x - offsetX;
+                const mouseWorldY = mousePos.y - offsetY;
+
+                // Check nodes
+                for(let n of nodes) {
+                    if(Math.hypot(n.x - mouseWorldX, n.y - mouseWorldY) < n.type.radius + 5) {
+                        hovering = true; break;
+                    }
+                }
+                // Check edges
+                if(!hovering) {
+                    for(let e of edges) {
+                        if(distToSegment({x: mouseWorldX, y: mouseWorldY}, e.from, e.to) < CLICK_TOLERANCE) {
+                            hovering = true; break;
+                        }
+                    }
+                }
+                document.body.style.cursor = hovering ? 'pointer' : 'default';
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            isDragging = false;
+            document.body.style.cursor = 'default';
+        });
+
+        canvas.addEventListener('click', (e) => {
+            // Ignore click if it was actually a drag motion
+            if (wasDragging) {
+                wasDragging = false;
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Compensate for scene translation to get World Coordinates
+            const worldX = x - offsetX;
+            const worldY = y - offsetY;
+
+            // Ignore clicks on L1 area (based on screen Y coordinate)
+            if(y > height - L1_HEIGHT) return;
+
+            let clickedNode = null;
+            let clickedEdge = null;
+
+            // 1. Check Node Clicks
+            for (let n of nodes) {
+                // Use world coordinates for hit test
+                if (Math.hypot(n.x - worldX, n.y - worldY) < n.type.radius + 5) {
+                    clickedNode = n;
+                    break;
+                }
+            }
+
+            if (clickedNode) {
+                selectedEdge = null; // Clear edge selection
+
+                // Toggle selection logic
+                const idx = selectedNodes.indexOf(clickedNode);
+                if (idx > -1) {
+                    selectedNodes.splice(idx, 1);
+                } else {
+                    selectedNodes.push(clickedNode);
+                    if (selectedNodes.length > 2) selectedNodes.shift();
+
+                    clickedNode.pulse = 1;
+
+                    if (selectedNodes.length === 2) {
+                        const [a, b] = selectedNodes;
+                        if (areConnected(a, b)) {
+                            const path = findPath(a, b);
+                            if(path) {
+                                for(let i=0; i<3; i++) setTimeout(() => packets.push(new Packet(path)), i * 150);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            // 2. Check Edge Clicks
+            for (let e of edges) {
+                // Use world coordinates for hit test
+                if(distToSegment({x: worldX, y: worldY}, e.from, e.to) < CLICK_TOLERANCE) {
+                    clickedEdge = e;
+                    break;
+                }
+            }
+
+            if (clickedEdge) {
+                selectedEdge = clickedEdge;
+                selectedNodes = []; // Clear node selection
+            } else {
+                // Clicked empty space
+                selectedNodes = [];
+                selectedEdge = null;
+            }
+        });
+
+        document.getElementById('btnOpenChannel').addEventListener('click', handleOpenChannel);
+        document.getElementById('btnCloseChannel').addEventListener('click', handleCloseChannel);
+        document.getElementById('btnNewPeer').addEventListener('click', addNode);
+        document.getElementById('btnPeerLeave').addEventListener('click', removeNode);
+        document.getElementById('btnAddTraffic').addEventListener('click', () => {
+            for(let i=0; i<15; i++) triggerRandomPayment();
+        });
+
+        initNetwork();
+        animate();
+    </script>
+</body>
+</html>
