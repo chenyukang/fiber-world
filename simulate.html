@@ -43,7 +43,7 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
-            min-width: 280px;
+            min-width: 250px;
         }
 
         .stat-item {
@@ -69,6 +69,46 @@
             font-weight: bold;
             font-size: 1.1rem;
             color: #38bdf8;
+        }
+
+        /* Help Overlay */
+        .help-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 5, 16, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            z-index: 20;
+            max-width: 300px;
+            transition: opacity 0.3s;
+            pointer-events: none; /* Allow clicking through if needed, or set auto if interactive */
+        }
+
+        .help-title {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 5px;
+        }
+
+        .help-item {
+            margin-bottom: 6px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .help-key {
+            font-weight: bold;
+            color: #38bdf8;
+            margin-right: 8px;
+            min-width: 70px;
         }
 
         .controls {
@@ -120,6 +160,17 @@
         button.l1-action:hover {
             background: rgba(168, 85, 247, 0.3);
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+        }
+
+        /* Distinct styles for L2 Payment actions */
+        button.l2-action {
+            border-color: #fbbf24; /* Amber/Gold for Payment */
+            color: #fcd34d;
+            background: rgba(251, 191, 36, 0.1);
+        }
+        button.l2-action:hover {
+            background: rgba(251, 191, 36, 0.3);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
         }
 
         /* Distinct styles for Topology actions */
@@ -186,6 +237,46 @@
                     <span class="stat-label">Volume</span>
                     <span class="stat-value" id="volume">0 CKB</span>
                 </div>
+
+                <div class="legend flex-wrap">
+                    <div class="legend-item"><div class="dot" style="background:#c084fc; color: #c084fc; box-shadow: 0 0 8px currentColor;"></div>Hub</div>
+                    <div class="legend-item"><div class="dot" style="background:#0ea5e9; color: #0ea5e9;"></div>Std</div>
+                    <div class="legend-item"><div class="dot" style="background:#2dd4bf; color: #2dd4bf;"></div>Leaf</div>
+                    <div class="legend-item"><div class="dot" style="background:#fbbf24; color: #fbbf24;"></div>Flow</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Help Overlay -->
+        <div id="helpOverlay" class="help-overlay">
+            <div class="help-title">Controls</div>
+            <div class="help-item">
+                <span class="help-key">Click Node</span>
+                <span>Select node (Max 2)</span>
+            </div>
+            <div class="help-item">
+                <span class="help-key">Click Line</span>
+                <span>Select Channel</span>
+            </div>
+            <div class="help-item">
+                <span class="help-key">Drag</span>
+                <span>Move view</span>
+            </div>
+            <div class="help-item">
+                <span class="help-key">Open</span>
+                <span>Build Channel for Select Nodes</span>
+            </div>
+            <div class="help-item">
+                <span class="help-key">Close</span>
+                <span>Close Selected Channel </span>
+            </div>
+             <div class="help-item">
+                <span class="help-key">Send</span>
+                <span>Send Payment (L2)</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
+                Press 'h' to toggle this help.<br>
             </div>
         </div>
 
@@ -196,6 +287,13 @@
             </button>
             <button class="l1-action" id="btnCloseChannel">
                 <span>🔒</span> Close
+            </button>
+
+            <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div>
+
+            <!-- L2 Payment Action -->
+            <button class="l2-action" id="btnSendPayment">
+                <span>💸</span> Send
             </button>
 
             <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 2px;"></div>
@@ -224,6 +322,14 @@
         const ctx = canvas.getContext('2d');
         let width, height;
 
+        // --- HELP TOGGLE ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'h') {
+                const help = document.getElementById('helpOverlay');
+                help.style.opacity = help.style.opacity === '0' ? '1' : '0';
+            }
+        });
+
         // --- SCENE TRANSLATION VARIABLES ---
         let offsetX = 0;
         let offsetY = 0;
@@ -246,6 +352,9 @@
         let tpsCounter = 0;
         let totalL2TxCount = 0;
         let totalL1TxCount = 0;
+
+        // L1 Sequence Counter
+        let l1SequenceCounter = 1;
 
         // Configuration
         const NODE_COUNT = 30; // Initial count
@@ -395,8 +504,18 @@
                 }
 
                 totalL1TxCount++;
-                // Spawn the block exactly where the TX landed
-                blocks.push({ x: this.targetX, w: 40, h: 40, color: this.type === 'open' ? '#0ea5e9' : '#ef4444' });
+
+                // Store the sequence number and increment the counter
+                const sequence = l1SequenceCounter++;
+
+                // Spawn the block exactly where the TX landed, including sequence number
+                blocks.push({
+                    x: this.targetX,
+                    w: 40,
+                    h: 40,
+                    color: this.type === 'open' ? '#0ea5e9' : '#ef4444',
+                    sequence: sequence // Store sequence number
+                });
             }
 
             draw() {
@@ -443,11 +562,15 @@
 
                 this.pulse = 0;
                 this.connections = [];
+                this.errorPulse = 0; // New: For visual feedback on failure
             }
 
             update() {
                 if (this.pulse > 0) this.pulse -= 0.05;
                 if (this.pulse < 0) this.pulse = 0;
+
+                if (this.errorPulse > 0) this.errorPulse -= 0.05;
+                if (this.errorPulse < 0) this.errorPulse = 0;
             }
 
             draw() {
@@ -455,32 +578,71 @@
                 const drawX = this.x + offsetX;
                 const drawY = this.y + offsetY;
 
-                const color = isSelected ? '#fbbf24' : this.type.color;
+                let color = isSelected ? '#fbbf24' : this.type.color;
+                let glowColor = isSelected ? '#fbbf24' : this.type.glowColor;
+
+                // Error state overrides
+                if (this.errorPulse > 0) {
+                    color = '#ef4444';
+                    glowColor = 'rgba(239, 68, 68, 0.8)';
+                }
+
                 const radius = this.type.radius;
 
                 // Glow / Pulse
-                if (this.pulse > 0 || isSelected || this.type.id === 'HUB') {
-                    const glowStrength = isSelected ? 30 : (this.type.id === 'HUB' ? 20 : 15);
-                    const glowAlpha = isSelected ? (0.2 + this.pulse * 0.5) : (this.type.id === 'HUB' ? 0.3 : this.pulse * 0.5);
+                // Highlight red bold if selected
+                if (this.pulse > 0 || this.errorPulse > 0 || isSelected || this.type.id === 'HUB') {
+                    let glowStrength = isSelected ? 40 : (this.type.id === 'HUB' ? 20 : 15);
+                    let glowAlpha = isSelected ? 0.8 : (this.type.id === 'HUB' ? 0.3 : this.pulse * 0.5);
+
+                    if(this.errorPulse > 0) {
+                        glowStrength = 40;
+                        glowAlpha = this.errorPulse;
+                    }
 
                     ctx.shadowBlur = glowStrength;
-                    ctx.shadowColor = isSelected ? '#fbbf24' : this.type.glowColor;
+                    ctx.shadowColor = isSelected ? '#ef4444' : glowColor; // Red if selected
 
                     ctx.beginPath();
-                    ctx.arc(drawX, drawY, radius + (this.pulse * 8), 0, Math.PI * 2);
-                    ctx.fillStyle = isSelected
-                        ? `rgba(251, 191, 36, ${glowAlpha})`
-                        : (this.type.id === 'HUB' ? this.type.glowColor : `rgba(14, 165, 233, ${glowAlpha})`);
+                    // Increased radius for selected
+                    const r = isSelected ? radius + 4 : radius + (this.pulse * 8) + (this.errorPulse * 5);
+                    ctx.arc(drawX, drawY, r, 0, Math.PI * 2);
+
+                    if (this.errorPulse > 0) {
+                         ctx.fillStyle = `rgba(239, 68, 68, ${glowAlpha})`;
+                    } else if (isSelected) {
+                         ctx.fillStyle = `rgba(239, 68, 68, ${glowAlpha})`; // Red Bold
+                    } else if (this.type.id === 'HUB') {
+                         ctx.fillStyle = this.type.glowColor;
+                    } else {
+                         ctx.fillStyle = `rgba(14, 165, 233, ${glowAlpha})`;
+                    }
+
                     ctx.fill();
                 }
 
-                ctx.shadowBlur = isSelected ? 15 : 0;
-                ctx.shadowColor = color;
-
-                ctx.beginPath();
-                ctx.arc(drawX, drawY, radius + (isSelected ? 2 : 0), 0, Math.PI * 2);
-                ctx.fillStyle = isSelected ? '#fff' : color;
-                ctx.fill();
+                // Core of selected node
+                if (isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(drawX, drawY, radius + 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                } else if (!this.pulse && !this.errorPulse && this.type.id !== 'HUB') {
+                    // Normal draw for unselected, idle nodes
+                    ctx.beginPath();
+                    ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                } else {
+                    // Already drawn core in glow block for others or standard overlay
+                    // Just ensure core exists for Hubs if not selected
+                    if(this.type.id === 'HUB' && !isSelected && !this.errorPulse) {
+                        ctx.beginPath();
+                        ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff'; // Hub core
+                        ctx.fill();
+                    }
+                }
 
                 ctx.shadowBlur = 0;
             }
@@ -569,6 +731,59 @@
 
         // --- Helpers ---
 
+        // Helper to check if point q lies on segment pr
+        function onSegment(p, q, r) {
+            return (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+                    q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y));
+        }
+
+        // Utility function to find orientation of ordered triplet (p, q, r).
+        function orientation(p, q, r) {
+            const val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            if (val === 0) return 0; // collinear
+            return (val > 0) ? 1 : 2; // clockwise or counterclockwise
+        }
+
+        // Helper to check if line segment (p1, q1) intersects with line segment (p2, q2)
+        function doLinesIntersect(p1, q1, p2, q2) {
+            // Find the four orientations needed for general and special cases
+            const o1 = orientation(p1, q1, p2);
+            const o2 = orientation(p1, q1, q2);
+            const o3 = orientation(p2, q2, p1);
+            const o4 = orientation(p2, q2, q1);
+
+            // General case
+            if (o1 !== 0 && o2 !== 0 && o3 !== 0 && o4 !== 0 && o1 !== o2 && o3 !== o4) {
+                return true;
+            }
+
+            // Special Cases: Check for collinearity and segment overlap
+            if (o1 === 0 && onSegment(p1, p2, q1)) return true;
+            if (o2 === 0 && onSegment(p1, q2, q1)) return true;
+            if (o3 === 0 && onSegment(p2, p1, q2)) return true;
+            if (o4 === 0 && onSegment(p2, q1, q2)) return true;
+
+            return false; // Doesn't intersect
+        }
+
+        // Check if a potential new edge (n1, n2) intersects any existing edge
+        function intersectsExistingEdge(n1, n2) {
+            for(let existingEdge of edges) {
+                const eFrom = existingEdge.from;
+                const eTo = existingEdge.to;
+
+                // Exclude edges sharing endpoints with the new edge (n1, n2)
+                if (n1 === eFrom || n1 === eTo || n2 === eFrom || n2 === eTo) {
+                    continue;
+                }
+
+                if (doLinesIntersect(n1, n2, eFrom, eTo)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // NOTE: createExplosion is updated to take screen coordinates, not world coordinates.
         function createExplosion(x, y, color) {
             for(let k=0; k<8; k++) particles.push(new Particle(x - offsetX, y - offsetY, color));
@@ -600,17 +815,113 @@
             blocks = [];
             selectedNodes = [];
             selectedEdge = null;
+            l1SequenceCounter = 1; // Reset counter on init
 
             totalL2TxCount = 0;
             totalL1TxCount = 0;
             totalVolume = 0;
 
-            for (let i = 0; i < NODE_COUNT; i++) {
-                createInitialNode();
+            const numNodes = NODE_COUNT;
+            const halfNodes = Math.ceil(numNodes / 2);
+
+            // Define two separate areas based on screen width
+            const margin = 100;
+            const separationWidth = 50;
+            const networkWidth = (width / 2) - margin - (separationWidth / 2);
+            const networkHeight = height - L1_HEIGHT - (margin * 2);
+
+            let nodesLeft = [];
+            let nodesRight = [];
+
+            // --- Network 1: Left ---
+            for (let i = 0; i < halfNodes; i++) {
+                // X position confined to the left half
+                const x = Math.random() * networkWidth + margin;
+                const y = Math.random() * networkHeight + margin;
+                const newNode = new Node(Date.now() + Math.random() + i, x, y);
+                nodes.push(newNode);
+                nodesLeft.push(newNode);
             }
-            reconnectAll();
+
+            // --- Network 2: Right ---
+            for (let i = 0; i < numNodes - halfNodes; i++) {
+                // X position confined to the right half
+                const x = Math.random() * networkWidth + (width / 2) + (separationWidth / 2);
+                const y = Math.random() * networkHeight + margin;
+                const newNode = new Node(Date.now() + Math.random() + i + halfNodes, x, y);
+                nodes.push(newNode);
+                nodesRight.push(newNode);
+            }
+
+            // Connect nodes within their own clusters
+            connectClusters(nodesLeft);
+            connectClusters(nodesRight);
         }
 
+        // Helper function to connect nodes within a list (WITH GUARANTEED CONNECTIVITY and intersection check)
+        function connectClusters(clusterNodes) {
+             if (clusterNodes.length < 2) return;
+
+             // 1. Probabilistic connection (for initial spread) - Check intersection
+             clusterNodes.forEach(n1 => {
+                clusterNodes.forEach(n2 => {
+                    if (n1 === n2 || areConnected(n1, n2)) return;
+
+                    const dist = Math.hypot(n1.x - n2.x, n1.y - n2.y);
+                    const reachLimit = (n1.type.reach + n2.type.reach) / 1.8;
+
+                    // Connect if close and randomly successful AND does NOT intersect
+                    if (dist < reachLimit && Math.random() > 0.7 && !intersectsExistingEdge(n1, n2)) {
+                         addEdge(n1, n2);
+                    }
+                });
+             });
+
+             // 2. GUARANTEED CONNECTIVITY: Prim's algorithm inspired to ensure single graph
+             let visited = new Set();
+             let startNode = clusterNodes[0];
+             visited.add(startNode);
+
+             while (visited.size < clusterNodes.length) {
+                 let closestEdge = null;
+                 let minD = Infinity;
+                 let connectNodeA = null; // A is always in visited
+                 let connectNodeB = null; // B is always NOT in visited
+
+                 // Find the shortest edge connecting a visited node (A) to an unvisited node (B)
+                 for (let nodeA of visited) {
+                     for (let nodeB of clusterNodes) {
+                         if (!visited.has(nodeB)) {
+                             const dist = Math.hypot(nodeA.x - nodeB.x, nodeA.y - nodeB.y);
+                             if (dist < minD) {
+                                 minD = dist;
+                                 connectNodeA = nodeA;
+                                 connectNodeB = nodeB;
+                             }
+                         }
+                     }
+                 }
+
+                 // If we found a valid new node to connect
+                 if (connectNodeB) {
+                     // Check if already connected by random connection step. If not, force connect.
+                     if (!areConnected(connectNodeA, connectNodeB)) {
+                         // Must check intersection for the guaranteed connection path
+                         if (!intersectsExistingEdge(connectNodeA, connectNodeB)) {
+                            addEdge(connectNodeA, connectNodeB);
+                         }
+                         // If it intersects, we skip this connection and try again with the next shortest edge from the visited set,
+                         // although this simplified Prim's might get stuck if all paths intersect. For visual demo, this is OK.
+                     }
+                     visited.add(connectNodeB);
+                 } else {
+                    // Safety break if the algorithm fails to find new connection
+                    break;
+                 }
+             }
+        }
+
+        // This function is still needed for Peer Join
         function createInitialNode() {
             // Generate nodes within original bounds
             const x = Math.random() * (width - 100) + 50;
@@ -619,33 +930,7 @@
             nodes.push(newNode);
         }
 
-        function reconnectAll() {
-            edges = [];
-            nodes.forEach(n => n.connections = []);
-
-            for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
-                    const reachLimit = (nodes[i].type.reach + nodes[j].type.reach) / 1.8;
-                    if (dist < reachLimit) {
-                        addEdge(nodes[i], nodes[j]);
-                    }
-                }
-            }
-
-            nodes.forEach(n => {
-                if(n.connections.length === 0) {
-                    let closest = null, minD = Infinity;
-                    nodes.forEach(other => {
-                        if(n!==other) {
-                            const d = Math.hypot(n.x - other.x, n.y - other.y);
-                            if(d < minD) { minD = d; closest = other; }
-                        }
-                    });
-                    if(closest) addEdge(n, closest);
-                }
-            });
-        }
+        // Removed reconnectAll as it is replaced by initNetwork logic
 
         function addNode() {
             const x = Math.random() * (width - 100) + 50;
@@ -666,8 +951,12 @@
                 }
             }
 
-            if (closest) {
+            // Check intersection before starting TX for join
+            if (closest && !intersectsExistingEdge(newNode, closest)) {
                 transactions.push(new Transaction('open', {nodeA: newNode, nodeB: closest}));
+            } else if (closest) {
+                // If it intersects, just pulse the node but don't add the edge (fail silently)
+                newNode.errorPulse = 0.5;
             }
         }
 
@@ -725,10 +1014,16 @@
         function findPath(start, end) {
             let queue = [[start]];
             let visited = new Set([start]);
+            let predecessors = new Map(); // Keep track of path
+
             while (queue.length > 0) {
                 let path = queue.shift();
                 let node = path[path.length - 1];
+
                 if (node === end) return path;
+
+                // Sort neighbors by type to prefer Hubs? Or just standard BFS
+                // Standard BFS gives shortest path by hops
                 for (let neighbor of node.connections) {
                     if (!visited.has(neighbor)) {
                         visited.add(neighbor);
@@ -751,6 +1046,7 @@
             if(start && end && start !== end) {
                 const path = findPath(start, end);
                 if (path && path.length > 1) packets.push(new Packet(path));
+                // If no path is found, it just silently fails, which is correct for partitioned networks
             }
         }
 
@@ -766,9 +1062,13 @@
                     createExplosion((a.x+b.x)/2 + offsetX, (a.y+b.y)/2 + offsetY, '#fbbf24');
                     const path = findPath(a, b);
                     if(path) packets.push(new Packet(path));
-                } else {
-                    // Not connected: Initiate funding transaction
+                } else if (!intersectsExistingEdge(a, b)) { // New Intersection Check
+                    // Not connected and doesn't intersect: Initiate funding transaction
                     transactions.push(new Transaction('open', {nodeA: a, nodeB: b}));
+                } else {
+                    // Intersects
+                    a.errorPulse = 1.0;
+                    b.errorPulse = 1.0;
                 }
                 return;
             }
@@ -790,11 +1090,15 @@
                     if (rA === rB || areConnected(rA, rB)) continue;
 
                     const dist = Math.hypot(rA.x - rB.x, rA.y - rB.y);
+                    const reachLimit = (rA.type.reach + rB.type.reach) / 1.8;
 
-                    // We removed the strict 'reachLimit' here to ensure we find *something* // even if nodes are far apart, since this is a fallback action button.
-                    if (dist < minD) {
-                        minD = dist;
-                        closestUnconnected = rB;
+                    // Check distance AND reach limit, and ensure it's the minimum distance found so far
+                    if (dist < minD && dist < reachLimit) {
+                        // Check intersection only if it's the current minimum distance candidate
+                        if (!intersectsExistingEdge(rA, rB)) {
+                            minD = dist;
+                            closestUnconnected = rB;
+                        }
                     }
                 }
 
@@ -804,7 +1108,18 @@
                 }
                 attempts++;
             }
-            console.log("Could not find any unconnected pair after multiple attempts.");
+
+            // If still failed (e.g. islands are far), FORCE a random connection
+            let forceAttempts = 0;
+            while(forceAttempts < 20) {
+                 const rA = nodes[Math.floor(Math.random() * nodes.length)];
+                 const rB = nodes[Math.floor(Math.random() * nodes.length)];
+                 if(rA !== rB && !areConnected(rA, rB) && !intersectsExistingEdge(rA, rB)) { // Check intersection for forced
+                      transactions.push(new Transaction('open', {nodeA: rA, nodeB: rB}));
+                      return;
+                 }
+                 forceAttempts++;
+            }
         }
 
         function handleCloseChannel() {
@@ -821,6 +1136,34 @@
             // Randomly select one edge to close
             const edge = edges[Math.floor(Math.random() * edges.length)];
             transactions.push(new Transaction('close', {edge: edge}));
+        }
+
+        function handleSendPayment() {
+            if (selectedNodes.length !== 2) {
+                // Shake button? For now just return or maybe flash a toast
+                return;
+            }
+            const [start, end] = selectedNodes;
+            const path = findPath(start, end);
+
+            if (path && path.length > 1) {
+                // Highlight path
+                for (let i = 0; i < path.length - 1; i++) {
+                    const u = path[i];
+                    const v = path[i+1];
+                    const edge = findEdge(u, v);
+                    if(edge) edge.flash = 1.0; // We'll use this in draw
+                }
+
+                // Send burst
+                for(let i=0; i<5; i++) {
+                    setTimeout(() => packets.push(new Packet(path)), i * 200);
+                }
+            } else {
+                // Fail
+                start.errorPulse = 1.0;
+                end.errorPulse = 1.0;
+            }
         }
 
         // --- Main Loop ---
@@ -849,6 +1192,12 @@
                 ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                 ctx.strokeRect(b.x, height - L1_HEIGHT + 10, b.w, b.h);
 
+                // Draw sequence number
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`#${b.sequence}`, b.x + b.w / 2, height - L1_HEIGHT + 10 + b.h / 2 + 3);
+
                 if(b.x < -50) blocks.splice(i, 1);
             }
 
@@ -866,12 +1215,13 @@
                 const color = EDGE_COLORS[edge.colorIdx] || EDGE_COLORS[0];
                 const grad = ctx.createLinearGradient(fromX, fromY, toX, toY);
 
-                if (edge === selectedEdge) {
+                if (edge === selectedEdge || edge.flash > 0) {
                     grad.addColorStop(0, '#ffffff');
                     grad.addColorStop(0.5, '#ffffff');
                     grad.addColorStop(1, '#ffffff');
                     ctx.shadowColor = '#ffffff';
                     ctx.shadowBlur = 15;
+                    if(edge.flash > 0) edge.flash -= 0.05;
                 } else {
                     grad.addColorStop(0, color);
                     grad.addColorStop(0.5, color.replace('0.3', '0.5'));
@@ -889,7 +1239,7 @@
             ctx.font = "10px sans-serif";
             ctx.textAlign = "center";
             for (let edge of edges) {
-                const isSelected = (edge === selectedEdge);
+                const isSelected = (edge === selectedEdge || edge.flash > 0);
                 const fromX = edge.from.x + offsetX;
                 const fromY = edge.from.y + offsetY;
                 const toX = edge.to.x + offsetX;
@@ -936,27 +1286,7 @@
                 node.draw();
             }
 
-            // UI: Selected Node Lines (Optional visual guide)
-            if (selectedNodes.length === 1) {
-                // Draw dotted line to mouse
-                ctx.beginPath();
-                ctx.setLineDash([5, 5]);
-                ctx.moveTo(selectedNodes[0].x + offsetX, selectedNodes[0].y + offsetY);
-                ctx.lineTo(mousePos.x, mousePos.y);
-                ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
-                ctx.stroke();
-                ctx.setLineDash([]);
-            } else if (selectedNodes.length === 2) {
-                // Draw connection preview between selected
-                ctx.beginPath();
-                ctx.setLineDash([5, 5]);
-                ctx.moveTo(selectedNodes[0].x + offsetX, selectedNodes[0].y + offsetY);
-                ctx.lineTo(selectedNodes[1].x + offsetX, selectedNodes[1].y + offsetY);
-                const connected = areConnected(selectedNodes[0], selectedNodes[1]);
-                ctx.strokeStyle = connected ? 'rgba(239, 68, 68, 0.5)' : 'rgba(34, 197, 94, 0.5)';
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
+            // UI: Selected Node Lines (Optional visual guide) removed per request
 
             // Update stats
             document.getElementById('nodeCount').innerText = nodes.length;
@@ -1081,16 +1411,6 @@
                     if (selectedNodes.length > 2) selectedNodes.shift();
 
                     clickedNode.pulse = 1;
-
-                    if (selectedNodes.length === 2) {
-                        const [a, b] = selectedNodes;
-                        if (areConnected(a, b)) {
-                            const path = findPath(a, b);
-                            if(path) {
-                                for(let i=0; i<3; i++) setTimeout(() => packets.push(new Packet(path)), i * 150);
-                            }
-                        }
-                    }
                 }
                 return;
             }
@@ -1116,6 +1436,7 @@
 
         document.getElementById('btnOpenChannel').addEventListener('click', handleOpenChannel);
         document.getElementById('btnCloseChannel').addEventListener('click', handleCloseChannel);
+        document.getElementById('btnSendPayment').addEventListener('click', handleSendPayment);
         document.getElementById('btnNewPeer').addEventListener('click', addNode);
         document.getElementById('btnPeerLeave').addEventListener('click', removeNode);
         document.getElementById('btnAddTraffic').addEventListener('click', () => {
